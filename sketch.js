@@ -1,101 +1,139 @@
-let shapes = [];
+let hudShapes = [];
+let baseShapes = [];
 let draggableShapes = [];
 let selectedShape = null;
-let zoomFactor = 1;
-let zoomingOut = false;
-let newShapesAdded = false;
+let state = 0;
+let mousePressedInRect = false;
+let keyPressedInRect = false;
+
+function preload() {
+  // Cargar la imagen del fondo
+  backgroundImg = loadImage('assets/Lenguaje Mul.svg');
+}
+
 
 function setup() {
-  createCanvas(800, 600);
-
-  // Formas fijas en el espacio
-  shapes.push(new FixedShape(300, 300, 'rect', 100));
-  shapes.push(new FixedShape(500, 300, 'circle', 50));
-  shapes.push(new FixedShape(400, 500, 'triangle', 80));
-
-  // Formas arrastrables con rotaciones iniciales
-  draggableShapes.push(new DraggableShape(100, 100, 'rect', 100));
-  draggableShapes.push(new DraggableShape(150, 150, 'circle', 50));
-  draggableShapes.push(new DraggableShape(200, 200, 'triangle', 80, 45)); // Triángulo con ángulo inicial
+  createCanvas(innerWidth, innerHeight);
+  loadLevel(1); // Iniciar el primer nivel
 }
 
 function draw() {
-  background(255);
+  background(backgroundImg);
 
-  // Aplicar zoom si corresponde
-  if (zoomingOut) {
-    if (zoomFactor > 0.5) {
-      zoomFactor -= 0.01;
-    } else {
-      zoomFactor = 0.5;
-      zoomingOut = false;
-      if (!newShapesAdded) {
-        addNewShapes();
-        newShapesAdded = true;
-      }
-    }
+  if (state === 0) {
+    drawState0(); // Estado inicial con los rectángulos
+  } else if (state === 1) {
+    // Mostrar el HUD y el área de juego cuando estamos en el estado 1
+    drawHUD();
+    drawBaseShapes();
+    drawDraggableShapes();
+    checkIfAllSnapped();
   }
+}
 
-  // Escalar para el efecto de zoom
-  scale(zoomFactor);
-  
-  // Dibujar formas fijas
-  shapes.forEach(shape => shape.display());
+// Dibujar el estado 0 con dos rectángulos rojos
+function drawState0() {
+  fill(mousePressedInRect ? 'green' : 'red');
+  rect(0, 0, width / 2, height);
+  fill(keyPressedInRect ? 'green' : 'red');
+  rect(width / 2, 0, width / 2, height);
 
-  // Dibujar y actualizar formas arrastrables
-  draggableShapes.forEach(shape => {
+  // Cambiar a estado 1 si ambos rectángulos están verdes
+  if (mousePressedInRect && keyPressedInRect) {
+    state = 1;
+  }
+}
+
+// Cargar las figuras en el HUD y las bases donde deben encastrarse
+function loadLevel(level) {
+  if (level === 1) {
+    // Figuras en el HUD (parte superior) que serán arrastrables
+    hudShapes = [
+      new DraggableShape(60, 60, 'rect', 80),
+      new DraggableShape(160, 60, 'circle', 40),
+      new DraggableShape(260, 60, 'triangle', 60)
+    ];
+    // Figuras base (parte inferior) donde deben encastrarse las figuras del HUD
+    baseShapes = [
+      new FixedShape(300, height - 150, 'rect', 80),
+      new FixedShape(450, height - 150, 'circle', 40),
+      new FixedShape(600, height - 150, 'triangle', 60)
+    ];
+  }
+}
+
+// Dibujar el HUD en la parte superior de la pantalla
+function drawHUD() {
+  fill(200);
+  noStroke();
+  rect(0, 0, width, 100); // Fondo del HUD
+
+  hudShapes.forEach(shape => shape.display()); // Dibujar las figuras del HUD
+}
+
+// Dibujar las figuras base donde deben encastrarse las figuras del HUD
+function drawBaseShapes() {
+  baseShapes.forEach(shape => shape.display());
+}
+
+// Dibujar y actualizar las figuras arrastrables desde el HUD
+function drawDraggableShapes() {
+  hudShapes.forEach(shape => {
     shape.update();
-    shape.checkIfSnappedOrNear(shapes); // Verificar si encastró correctamente o si está cerca de otra forma incorrecta
   });
+}
 
-  // Si todas las piezas están encastradas correctamente, comenzar el zoom out
-  if (allShapesSnapped() && !zoomingOut) {
-    zoomingOut = true;
+// Verificar si todas las figuras están encastradas
+function checkIfAllSnapped() {
+  if (hudShapes.every(shape => shape.snapped)) {
+    state = 2; // Pasar al siguiente nivel o estado cuando todas estén encastradas
+    console.log("Nivel completado. Cambia al siguiente nivel.");
   }
-}
-
-function allShapesSnapped() {
-  return draggableShapes.every(shape => shape.snapped);
-}
-
-function addNewShapes() {
-  // Agregar nuevas formas fijas
-  shapes.push(new FixedShape(300, 700, 'rect', 120));
-  shapes.push(new FixedShape(500, 700, 'circle', 60));
-  shapes.push(new FixedShape(400, 900, 'triangle', 100));
-
-  // Agregar nuevas formas arrastrables
-  draggableShapes.push(new DraggableShape(100, 600, 'rect', 120));
-  draggableShapes.push(new DraggableShape(150, 600, 'circle', 60));
-  draggableShapes.push(new DraggableShape(200, 600, 'triangle', 100, 45)); // Triángulo con ángulo inicial
 }
 
 function mousePressed() {
-  draggableShapes.forEach(shape => {
-    if (shape.isMouseOver() && !shape.snapped) {
-      selectedShape = shape;
-    }
-  });
+  if (state === 0) {
+    mousePressedInRect = true; // Marcar el rectángulo izquierdo como cumplido
+  } else if (state === 1) {
+    hudShapes.forEach(shape => {
+      if (shape.isMouseOver()) {
+        selectedShape = shape;
+        selectedShape.saveOriginalPosition(); // Guardar la posición original
+      }
+    });
+  }
 }
 
 function mouseDragged() {
   if (selectedShape && !selectedShape.snapped) {
-    selectedShape.x = mouseX / zoomFactor;
-    selectedShape.y = mouseY / zoomFactor;
+    selectedShape.x = mouseX;
+    selectedShape.y = mouseY;
+
+    // Verificar si la figura está dentro del rango para encastrarse
+    selectedShape.checkIfCanSnap(baseShapes);
+
+    // Verificar si está sobre una figura incorrecta
+    selectedShape.checkIfOnIncorrectShape(baseShapes);
   }
 }
 
 function mouseReleased() {
-  selectedShape = null;
+  if (selectedShape && !selectedShape.snapped) {
+    // Verificar si la figura está cerca de la base para encastrarla
+    selectedShape.checkIfSnapped(baseShapes);
+    
+    // Restaurar la posición original si no está encastrada
+    if (!selectedShape.snapped) {
+      selectedShape.restoreOriginalPosition(); 
+    }
+
+    selectedShape = null; // Deseleccionar la figura
+  }
 }
 
 function keyPressed() {
-  if (selectedShape && !selectedShape.snapped) {
-    if (keyCode === LEFT_ARROW) {
-      selectedShape.angle -= 45;
-    } else if (keyCode === RIGHT_ARROW) {
-      selectedShape.angle += 45;
-    }
+  if (state === 0) {
+    keyPressedInRect = true; // Marcar el rectángulo derecho como cumplido
   }
 }
 
@@ -134,31 +172,26 @@ class FixedShape {
 
 // Clase para formas arrastrables
 class DraggableShape {
-  constructor(x, y, type, size, angle = 0) {
+  constructor(x, y, type, size) {
     this.x = x;
     this.y = y;
     this.type = type;
     this.size = size;
-    this.angle = angle;
     this.snapped = false;
-    this.incorrectlyNear = false;
-    this.correctlyNear = false; // Nuevo estado
+    this.originalX = x;
+    this.originalY = y; // Guardar la posición original
+    this.color = color(255, 165, 0); // Color inicial naranja
   }
 
   update() {
+    this.display();
+  }
+
+  display() {
     push();
     translate(this.x, this.y);
-    rotate(radians(this.angle));
 
-    if (this.snapped) {
-      fill(0, 255, 0); // Verde cuando está encastrada
-    } else if (this.correctlyNear) {
-      fill('#9ACD32'); // Amarillo verdoso cuando está cerca de encastrar
-    } else if (this.incorrectlyNear) {
-      fill(255, 255, 0); // Amarillo cuando está cerca pero mal
-    } else {
-      fill(255, 0, 0); // Rojo por defecto
-    }
+    fill(this.color); // Usar el color actualizado
     stroke(0);
     strokeWeight(2);
 
@@ -178,39 +211,68 @@ class DraggableShape {
     pop();
   }
 
-  checkIfSnappedOrNear(fixedShapes) {
-    let nearAnyShape = false;
-    this.correctlyNear = false; // Reiniciar estado
+  checkIfCanSnap(targetShapes) {
+    // Cambiar color a amarillo si la figura está dentro del rango para encastrarse
+    this.color = color(255, 165, 0); // Naranja por defecto
 
-    for (let fixed of fixedShapes) {
-      if (this.type === fixed.type) {
-        let d = dist(this.x, this.y, fixed.x, fixed.y);
-        if (d < 50) {
-          if (this.angle % 360 === 0 && this.x === fixed.x && this.y === fixed.y) {
-            this.snapped = true; // Encajó completamente
-            this.incorrectlyNear = false;
-            this.correctlyNear = false;
-          } else {
-            this.correctlyNear = true; // Está sobre la posición correcta pero con rotación incorrecta
-            this.snapped = false;
-          }
-        } else {
-          this.snapped = false;
-        }
-      } else {
-        let d = dist(this.x, this.y, fixed.x, fixed.y);
-        if (d < 50) {
-          nearAnyShape = true; // Está cerca pero de la forma incorrecta
-        }
+    targetShapes.forEach(target => {
+      if (
+        this.type === target.type &&
+        dist(this.x, this.y, target.x, target.y) < 20
+      ) {
+        this.color = color(255, 255, 0); // Amarillo cuando está en el rango de encastre
       }
-    }
+    });
+  }
 
-    this.incorrectlyNear = nearAnyShape && !this.snapped && !this.correctlyNear;
+  checkIfSnapped(targetShapes) {
+    targetShapes.forEach(target => {
+      if (
+        this.type === target.type &&
+        dist(this.x, this.y, target.x, target.y) < 20
+      ) {
+        this.snapped = true;
+        this.x = target.x;
+        this.y = target.y;
+        this.color = color(0, 255, 0); // Verde cuando ya está encastrada
+      }
+    });
   }
 
   isMouseOver() {
-    let d = dist(mouseX / zoomFactor, mouseY / zoomFactor, this.x, this.y);
-    return d < this.size / 2;
+    return dist(mouseX, mouseY, this.x, this.y) < this.size / 2;
+  }
+
+  // Guardar la posición original cuando se empieza a arrastrar
+  saveOriginalPosition() {
+    this.originalX = this.x;
+    this.originalY = this.y;
+  }
+
+  // Restaurar la posición original si no está encastrada correctamente
+  restoreOriginalPosition() {
+    if (!this.snapped) {
+      this.x = this.originalX;
+      this.y = this.originalY;
+      this.color = color(255, 165, 0); // Volver al color naranja si no encastra
+    }
+  }
+
+  // Verificar si está sobre una base incorrecta y ponerlo en rojo
+  checkIfOnIncorrectShape(targetShapes) {
+    let isOnIncorrectShape = true; // Suponemos que está sobre una figura incorrecta
+
+    targetShapes.forEach(target => {
+      if (
+        this.type === target.type &&
+        dist(this.x, this.y, target.x, target.y) < 20
+      ) {
+        isOnIncorrectShape = false; // Si está sobre la base correcta, no es incorrecto
+      }
+    });
+
+    if (isOnIncorrectShape) {
+      this.color = color(255, 0, 0); // Rojo si es incorrecta
+    }
   }
 }
-
