@@ -11,7 +11,6 @@ function preload() {
   backgroundImg = loadImage('assets/Lenguaje Mul.svg');
 }
 
-
 function setup() {
   createCanvas(innerWidth, innerHeight);
   loadLevel(1); // Iniciar el primer nivel
@@ -51,7 +50,7 @@ function loadLevel(level) {
     hudShapes = [
       new DraggableShape(60, 60, 'rect', 80),
       new DraggableShape(160, 60, 'circle', 40),
-      new DraggableShape(260, 60, 'triangle', 60)
+      new DraggableShape(260, 60, 'triangle', 60, 45)
     ];
     // Figuras base (parte inferior) donde deben encastrarse las figuras del HUD
     baseShapes = [
@@ -134,21 +133,31 @@ function mouseReleased() {
 function keyPressed() {
   if (state === 0) {
     keyPressedInRect = true; // Marcar el rectángulo derecho como cumplido
+  } else if (selectedShape) {
+    if (keyCode === LEFT_ARROW) {
+      selectedShape.rotate(-45); // Rotar a la izquierda
+    } else if (keyCode === RIGHT_ARROW) {
+      selectedShape.rotate(45); // Rotar a la derecha
+    }
   }
 }
 
+
 // Clase para formas fijas
 class FixedShape {
-  constructor(x, y, type, size) {
+  constructor(x, y, type, size, angle = 0) {
     this.x = x;
     this.y = y;
     this.type = type;
     this.size = size;
+    this.angle = angle; // Ángulo de la base
   }
 
   display() {
     push();
     translate(this.x, this.y);
+    rotate(this.angle); // Aplicar la rotación
+
     noFill();
     stroke(0);
     strokeWeight(2);
@@ -172,11 +181,12 @@ class FixedShape {
 
 // Clase para formas arrastrables
 class DraggableShape {
-  constructor(x, y, type, size) {
+  constructor(x, y, type, size, angle = 0) {
     this.x = x;
     this.y = y;
     this.type = type;
     this.size = size;
+    this.angle = angle;
     this.snapped = false;
     this.originalX = x;
     this.originalY = y; // Guardar la posición original
@@ -190,6 +200,7 @@ class DraggableShape {
   display() {
     push();
     translate(this.x, this.y);
+    rotate(this.angle); // Aplicar la rotación
 
     fill(this.color); // Usar el color actualizado
     stroke(0);
@@ -218,7 +229,8 @@ class DraggableShape {
     targetShapes.forEach(target => {
       if (
         this.type === target.type &&
-        dist(this.x, this.y, target.x, target.y) < 20
+        dist(this.x, this.y, target.x, target.y) < 20 &&
+        this.angle % 45 === target.angle % 45 // Verificar que las rotaciones coincidan
       ) {
         this.color = color(255, 255, 0); // Amarillo cuando está en el rango de encastre
       }
@@ -227,52 +239,43 @@ class DraggableShape {
 
   checkIfSnapped(targetShapes) {
     targetShapes.forEach(target => {
+      // Verificar que la figura esté dentro del rango de la base y que los ángulos coincidan
       if (
         this.type === target.type &&
-        dist(this.x, this.y, target.x, target.y) < 20
+        dist(this.x, this.y, target.x, target.y) < 20 &&
+        this.angle % 45 === target.angle % 45 // Verificar que las rotaciones coincidan
       ) {
         this.snapped = true;
         this.x = target.x;
         this.y = target.y;
-        this.color = color(0, 255, 0); // Verde cuando ya está encastrada
+        this.color = color(0, 255, 0); // Verde cuando ya está encastrado
       }
     });
   }
 
-  isMouseOver() {
-    return dist(mouseX, mouseY, this.x, this.y) < this.size / 2;
+  restoreOriginalPosition() {
+    this.x = this.originalX;
+    this.y = this.originalY;
   }
 
-  // Guardar la posición original cuando se empieza a arrastrar
   saveOriginalPosition() {
     this.originalX = this.x;
     this.originalY = this.y;
   }
 
-  // Restaurar la posición original si no está encastrada correctamente
-  restoreOriginalPosition() {
-    if (!this.snapped) {
-      this.x = this.originalX;
-      this.y = this.originalY;
-      this.color = color(255, 165, 0); // Volver al color naranja si no encastra
-    }
+  rotate(degrees) {
+    this.angle += degrees;
+    this.angle = this.angle % 360; // Asegurar que el ángulo esté entre 0 y 360 grados
   }
 
-  // Verificar si está sobre una base incorrecta y ponerlo en rojo
-  checkIfOnIncorrectShape(targetShapes) {
-    let isOnIncorrectShape = true; // Suponemos que está sobre una figura incorrecta
-
-    targetShapes.forEach(target => {
-      if (
-        this.type === target.type &&
-        dist(this.x, this.y, target.x, target.y) < 20
-      ) {
-        isOnIncorrectShape = false; // Si está sobre la base correcta, no es incorrecto
-      }
-    });
-
-    if (isOnIncorrectShape) {
-      this.color = color(255, 0, 0); // Rojo si es incorrecta
-    }
+  isMouseOver() {
+    return (
+      mouseX > this.x - this.size / 2 &&
+      mouseX < this.x + this.size / 2 &&
+      mouseY > this.y - this.size / 2 &&
+      mouseY < this.y + this.size / 2
+    );
   }
 }
+
+
