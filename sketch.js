@@ -3,26 +3,32 @@ let baseShapes = [];
 let draggableShapes = [];
 let selectedShape = null;
 let state = 0;
+let currentLevel = 1;
 let mousePressedInRect = false;
 let keyPressedInRect = false;
 
+// Variables para los sonidos
+let rotateSound;
+let snapSound;
+
 function preload() {
-  // Cargar la imagen del fondo
   backgroundImg = loadImage('assets/Lenguaje Mul.svg');
+  rotateSound = loadSound('assets/girar elementos.mp3');
+  snapSound = loadSound('assets/conexion correcta 1.mp3');
 }
 
 function setup() {
   createCanvas(innerWidth, innerHeight);
-  loadLevel(1); // Iniciar el primer nivel
+  initHUD();
+  loadLevel(currentLevel);
 }
 
 function draw() {
   background(backgroundImg);
 
   if (state === 0) {
-    drawState0(); // Estado inicial con los rectángulos
+    drawState0();
   } else if (state === 1) {
-    // Mostrar el HUD y el área de juego cuando estamos en el estado 1
     drawHUD();
     drawBaseShapes();
     drawDraggableShapes();
@@ -30,29 +36,39 @@ function draw() {
   }
 }
 
-// Dibujar el estado 0 con dos rectángulos rojos
 function drawState0() {
   fill(mousePressedInRect ? 'green' : 'red');
   rect(0, 0, width / 2, height);
   fill(keyPressedInRect ? 'green' : 'red');
   rect(width / 2, 0, width / 2, height);
 
-  // Cambiar a estado 1 si ambos rectángulos están verdes
   if (mousePressedInRect && keyPressedInRect) {
     state = 1;
   }
 }
 
-// Cargar las figuras en el HUD y las bases donde deben encastrarse
+function initHUD() {
+  hudShapes = [
+    new DraggableShape(60, 60, 'rect', 80),
+    new DraggableShape(160, 60, 'circle', 40),
+    new DraggableShape(260, 60, 'triangle', 60),
+    new DraggableShape(360, 60, 'star', 50),
+    new DraggableShape(460, 60, 'ellipse', 80, 40),
+    new DraggableShape(560, 60, 'hexagon', 60),
+    new DraggableShape(660, 60, 'pentagon', 50),
+    new DraggableShape(760, 60, 'octagon', 55),
+    new DraggableShape(860, 60, 'diamond', 50)
+  ];
+}
+
 function loadLevel(level) {
   if (level === 1) {
-    // Figuras en el HUD (parte superior) que serán arrastrables
-    hudShapes = [
-      new DraggableShape(60, 60, 'rect', 80),
-      new DraggableShape(160, 60, 'circle', 40),
-      new DraggableShape(260, 60, 'triangle', 60, 45)
+    baseShapes = [
+      new FixedShape(300, height - 150, 'rect', 80),
+      new FixedShape(450, height - 150, 'circle', 40),
+      new FixedShape(600, height - 150, 'triangle', 60)
     ];
-    // Figuras base (parte inferior) donde deben encastrarse las figuras del HUD
+  } else {
     baseShapes = [
       new FixedShape(300, height - 150, 'rect', 80),
       new FixedShape(450, height - 150, 'circle', 40),
@@ -61,43 +77,53 @@ function loadLevel(level) {
   }
 }
 
-// Dibujar el HUD en la parte superior de la pantalla
 function drawHUD() {
   fill(200);
   noStroke();
-  rect(0, 0, width, 100); // Fondo del HUD
-
-  hudShapes.forEach(shape => shape.display()); // Dibujar las figuras del HUD
+  rect(0, 0, width, 100);
+  hudShapes.forEach(shape => shape.display());
 }
 
-// Dibujar las figuras base donde deben encastrarse las figuras del HUD
 function drawBaseShapes() {
   baseShapes.forEach(shape => shape.display());
 }
 
-// Dibujar y actualizar las figuras arrastrables desde el HUD
 function drawDraggableShapes() {
   hudShapes.forEach(shape => {
     shape.update();
   });
 }
 
-// Verificar si todas las figuras están encastradas
 function checkIfAllSnapped() {
-  if (hudShapes.every(shape => shape.snapped)) {
-    state = 2; // Pasar al siguiente nivel o estado cuando todas estén encastradas
-    console.log("Nivel completado. Cambia al siguiente nivel.");
+  if (baseShapes.every(shape => shape.snapped)) {
+    currentLevel++;
+    if (currentLevel > 3) {
+      console.log("Juego completado. Todos los niveles terminados.");
+      state = 2;
+    } else {
+      console.log(`Nivel ${currentLevel - 1} completado. Cambia al nivel ${currentLevel}.`);
+      resetSnappedShapes();
+      loadLevel(currentLevel);
+    }
   }
+}
+
+function resetSnappedShapes() {
+  hudShapes.forEach(shape => {
+    shape.snapped = false;
+    shape.restoreOriginalPosition();
+    shape.color = color(255, 165, 0); // Restaurar el color naranja
+  });
 }
 
 function mousePressed() {
   if (state === 0) {
-    mousePressedInRect = true; // Marcar el rectángulo izquierdo como cumplido
+    mousePressedInRect = true;
   } else if (state === 1) {
     hudShapes.forEach(shape => {
       if (shape.isMouseOver()) {
         selectedShape = shape;
-        selectedShape.saveOriginalPosition(); // Guardar la posición original
+        selectedShape.saveOriginalPosition();
       }
     });
   }
@@ -107,40 +133,37 @@ function mouseDragged() {
   if (selectedShape && !selectedShape.snapped) {
     selectedShape.x = mouseX;
     selectedShape.y = mouseY;
-
-    // Verificar si la figura está dentro del rango para encastrarse
     selectedShape.checkIfCanSnap(baseShapes);
-
-    // Verificar si está sobre una figura incorrecta
-    selectedShape.checkIfOnIncorrectShape(baseShapes);
   }
 }
 
 function mouseReleased() {
   if (selectedShape && !selectedShape.snapped) {
-    // Verificar si la figura está cerca de la base para encastrarla
     selectedShape.checkIfSnapped(baseShapes);
-    
-    // Restaurar la posición original si no está encastrada
-    if (!selectedShape.snapped) {
-      selectedShape.restoreOriginalPosition(); 
+    if (selectedShape.snapped) {
+      snapSound.play(); // Reproducir sonido al encastrar
+    } else {
+      selectedShape.restoreOriginalPosition();
     }
-
-    selectedShape = null; // Deseleccionar la figura
+    selectedShape = null;
   }
 }
 
 function keyPressed() {
   if (state === 0) {
-    keyPressedInRect = true; // Marcar el rectángulo derecho como cumplido
+    keyPressedInRect = true;
   } else if (selectedShape) {
     if (keyCode === LEFT_ARROW) {
-      selectedShape.rotate(-45); // Rotar a la izquierda
+      selectedShape.rotate(-45);
+      rotateSound.play(); // Reproducir sonido al girar
     } else if (keyCode === RIGHT_ARROW) {
-      selectedShape.rotate(45); // Rotar a la derecha
+      selectedShape.rotate(45);
+      rotateSound.play(); // Reproducir sonido al girar
     }
   }
 }
+
+// Clases para las figuras (FixedShape y DraggableShape) siguen igual...
 
 
 // Clase para formas fijas
@@ -150,13 +173,14 @@ class FixedShape {
     this.y = y;
     this.type = type;
     this.size = size;
-    this.angle = angle; // Ángulo de la base
+    this.angle = angle;
+    this.snapped = false;
   }
 
   display() {
     push();
     translate(this.x, this.y);
-    rotate(this.angle); // Aplicar la rotación
+    rotate(this.angle);
 
     noFill();
     stroke(0);
@@ -189,8 +213,8 @@ class DraggableShape {
     this.angle = angle;
     this.snapped = false;
     this.originalX = x;
-    this.originalY = y; // Guardar la posición original
-    this.color = color(255, 165, 0); // Color inicial naranja
+    this.originalY = y;
+    this.color = color(255, 165, 0);
   }
 
   update() {
@@ -200,9 +224,9 @@ class DraggableShape {
   display() {
     push();
     translate(this.x, this.y);
-    rotate(this.angle); // Aplicar la rotación
+    rotate(this.angle);
 
-    fill(this.color); // Usar el color actualizado
+    fill(this.color);
     stroke(0);
     strokeWeight(2);
 
@@ -223,32 +247,30 @@ class DraggableShape {
   }
 
   checkIfCanSnap(targetShapes) {
-    // Cambiar color a amarillo si la figura está dentro del rango para encastrarse
-    this.color = color(255, 165, 0); // Naranja por defecto
-
+    this.color = color(255, 165, 0);
     targetShapes.forEach(target => {
       if (
         this.type === target.type &&
         dist(this.x, this.y, target.x, target.y) < 20 &&
-        this.angle % 45 === target.angle % 45 // Verificar que las rotaciones coincidan
+        this.angle === target.angle
       ) {
-        this.color = color(255, 255, 0); // Amarillo cuando está en el rango de encastre
+        this.color = color(255, 255, 0);
       }
     });
   }
 
   checkIfSnapped(targetShapes) {
     targetShapes.forEach(target => {
-      // Verificar que la figura esté dentro del rango de la base y que los ángulos coincidan
       if (
         this.type === target.type &&
         dist(this.x, this.y, target.x, target.y) < 20 &&
-        this.angle % 45 === target.angle % 45 // Verificar que las rotaciones coincidan
+        this.angle === target.angle
       ) {
         this.snapped = true;
+        target.snapped = true;
         this.x = target.x;
         this.y = target.y;
-        this.color = color(0, 255, 0); // Verde cuando ya está encastrado
+        this.color = color(0, 255, 0);
       }
     });
   }
@@ -265,7 +287,7 @@ class DraggableShape {
 
   rotate(degrees) {
     this.angle += degrees;
-    this.angle = this.angle % 360; // Asegurar que el ángulo esté entre 0 y 360 grados
+    this.angle = this.angle % 360;
   }
 
   isMouseOver() {
@@ -278,4 +300,10 @@ class DraggableShape {
   }
 }
 
-
+function resetSnappedShapes() {
+  hudShapes.forEach(shape => {
+    shape.snapped = false;
+    shape.restoreOriginalPosition();
+    shape.color = color(255, 165, 0); // Restaurar el color naranja
+  });
+}
