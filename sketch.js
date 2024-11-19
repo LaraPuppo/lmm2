@@ -10,13 +10,13 @@ let rotateSound, snapSound;
 function preload() {
   // Cargar imágenes
   backgroundImg = loadImage('assets/Lenguaje Mul.svg');
-  rectImg = loadImage('assets/rect.png');
-  circleImg = loadImage('assets/rectangle.png');
-  batteryImg = loadImage('assets/bateria.png');
+  rectImg = loadImage('assets/componentes/img2.png');
+  circleImg = loadImage('assets/componentes/img3.png');
+  batteryImg = loadImage('assets/componentes/img4.png');
 
   // Cargar sonidos
-  rotateSound = loadSound('assets/girar elementos.mp3');
-  snapSound = loadSound('assets/conexion correcta 1.mp3');
+  rotateSound = loadSound('assets/sonidos/girar elementos.mp3');
+  snapSound = loadSound('assets/sonidos/conexion correcta 1.mp3');
 }
 
 function setup() {
@@ -44,41 +44,40 @@ function draw() {
 
 function initHUD() {
   hudShapes = [
-    new DraggableShape(60, 60, rectImg, 50, 50),
-    new DraggableShape(160, 60, circleImg, 50, 50),
-    new DraggableShape(260, 60, batteryImg, 50, 50)
+    new DraggableShape(60, 60, rectImg),
+    new DraggableShape(160, 60, circleImg),
+    new DraggableShape(260, 60, batteryImg)
   ];
 }
 
 function loadLevel(level) {
-  // Dependiendo del nivel, se cambian las posiciones o las piezas
   if (level === 1) {
     baseShapes = [
-      new FixedShape(300, height - 150, rectImg, 50, 50),
-      new FixedShape(450, height - 150, circleImg, 50, 50),
-      new FixedShape(600, height - 150, batteryImg, 50, 50)
+      new FixedShape(300, height - 150, rectImg),
+      new FixedShape(450, height - 150, circleImg),
+      new FixedShape(600, height - 150, batteryImg)
     ];
   } else if (level === 2) {
     baseShapes = [
-      new FixedShape(350, height - 200, rectImg, 50, 50),
-      new FixedShape(500, height - 200, circleImg, 50, 50),
-      new FixedShape(650, height - 200, batteryImg, 50, 50)
+      new FixedShape(350, height - 200, rectImg),
+      new FixedShape(500, height - 200, circleImg),
+      new FixedShape(650, height - 200, batteryImg)
     ];
   } else if (level === 3) {
     baseShapes = [
-      new FixedShape(400, height - 250, rectImg, 50, 50),
-      new FixedShape(550, height - 250, circleImg, 50, 50),
-      new FixedShape(700, height - 250, batteryImg, 50, 50)
+      new FixedShape(400, height - 250, rectImg),
+      new FixedShape(550, height - 250, circleImg),
+      new FixedShape(700, height - 250, batteryImg)
     ];
   } else if (level === 4) {
     baseShapes = [
-      new FixedShape(350, height - 300, rectImg, 50, 50),
-      new FixedShape(500, height - 300, circleImg, 50, 50),
-      new FixedShape(650, height - 300, batteryImg, 50, 50)
+      new FixedShape(350, height - 300, rectImg),
+      new FixedShape(500, height - 300, circleImg),
+      new FixedShape(650, height - 300, batteryImg)
     ];
   }
-  
 }
+
 
 function drawHUD() {
   fill(200);
@@ -123,13 +122,16 @@ function resetSnappedShapes() {
 
 
 function mousePressed() {
-  hudShapes.forEach(shape => {
+  for (let shape of hudShapes) {
     if (shape.isMouseOver()) {
       selectedShape = shape;
-      selectedShape.saveOriginalPosition();
+      shape.dragging = true;
+      break;
     }
-  });
+  }
 }
+
+
 
 function mouseDragged() {
   if (selectedShape && !selectedShape.snapped) {
@@ -140,125 +142,102 @@ function mouseDragged() {
 }
 
 function mouseReleased() {
-  if (selectedShape && !selectedShape.snapped) {
-    selectedShape.checkIfSnapped(baseShapes);
-    if (selectedShape.snapped) {
-      snapSound.play(); // Reproducir sonido al encastrar
-    } else {
-      selectedShape.restoreOriginalPosition();
+  if (selectedShape) {
+    let snapped = false;
+
+    for (let target of baseShapes) {
+      const distance = dist(
+        selectedShape.x,
+        selectedShape.y,
+        target.x,
+        target.y
+      );
+
+      if (distance < 20) { // Umbral para el encastre
+        selectedShape.snapTo(target.x, target.y);
+        snapSound.play();
+        snapped = true;
+        break;
+      }
     }
+
+    if (!snapped) {
+      // Regresa la forma al HUD si no encastra
+      selectedShape.snapTo(60, 60); // Coordenadas iniciales (puedes ajustarlas dinámicamente)
+    }
+
+    selectedShape.dragging = false;
     selectedShape = null;
   }
 }
 
+
 function keyPressed() {
   if (selectedShape) {
-    if (keyCode === LEFT_ARROW) {
-      selectedShape.rotate(-45); // Gira en sentido antihorario
-      rotateSound.play();
-    } else if (keyCode === RIGHT_ARROW) {
-      selectedShape.rotate(45); // Gira en sentido horario
+    if (key === 'R' || key === 'r') {
+      selectedShape.rotation += HALF_PI;
       rotateSound.play();
     }
   }
 }
 
 
-class FixedShape {
-  constructor(x, y, img, width, height) {
-    this.x = x;
-    this.y = y;
-    this.img = img;
-    this.width = width;
-    this.height = height;
-    this.snapped = false;
-  }
-
-  display() {
-    imageMode(CENTER);
-    image(this.img, this.x, this.y, this.width, this.height); // Dibuja la imagen con tamaño ajustado
-  }
-}
 
 class DraggableShape {
-  constructor(x, y, img, width, height) {
+  constructor(x, y, img) {
     this.x = x;
     this.y = y;
     this.img = img;
-    this.width = width;
-    this.height = height;
+    this.dragging = false;
     this.snapped = false;
-    this.originalX = x;
-    this.originalY = y;
-    this.rotation = 0; // Nueva propiedad para la rotación
+    this.rotation = 0; // Ángulo de rotación
   }
 
   update() {
+    if (this.dragging) {
+      this.x = mouseX;
+      this.y = mouseY;
+    }
     this.display();
   }
 
   display() {
+    push();
+    translate(this.x, this.y);
+    rotate(this.rotation);
     imageMode(CENTER);
-    push(); // Guarda el estado de transformación actual
-    translate(this.x, this.y); // Mueve el punto de origen al centro de la imagen
-    rotate(radians(this.rotation)); // Aplica la rotación
-    image(this.img, 0, 0, this.width, this.height); // Dibuja la imagen
-    pop(); // Restaura el estado de transformación anterior
-  }
-
-  rotate(degrees) {
-    this.rotation += degrees;
-    // Normalizar la rotación a un rango de 0 a 360 grados
-    if (this.rotation >= 360) {
-      this.rotation -= 360;
-    } else if (this.rotation < 0) {
-      this.rotation += 360;
-    }
-  }
-  
-
-  checkIfCanSnap(targetShapes) {
-    targetShapes.forEach(target => {
-      if (dist(this.x, this.y, target.x, target.y) < 20) {
-        // Si está cerca, cambia de color o activa algo visual
-      }
-    });
-  }
-
-  checkIfSnapped(targetShapes) {
-    targetShapes.forEach(target => {
-      // Solo verifica si la rotación está cerca de 0 grados
-      if (dist(this.x, this.y, target.x, target.y) < 20 && abs(this.rotation) < 1) {
-        this.snapped = true;
-        target.snapped = true;
-        this.x = target.x;
-        this.y = target.y;
-        this.rotation = 0; // Reinicia la rotación al encajar (si es necesario)
-      }
-    });
-  }
-  
-
-  restoreOriginalPosition() {
-    this.x = this.originalX;
-    this.y = this.originalY;
-    this.snapped = false;
-    this.rotation = 0; // Reinicia la rotación
-  }
-
-  saveOriginalPosition() {
-    this.originalX = this.x;
-    this.originalY = this.y;
+    image(this.img, 0, 0);
+    pop();
   }
 
   isMouseOver() {
+    const halfWidth = this.img.width / 2;
+    const halfHeight = this.img.height / 2;
     return (
-      mouseX > this.x - this.width / 2 &&
-      mouseX < this.x + this.width / 2 &&
-      mouseY > this.y - this.height / 2 &&
-      mouseY < this.y + this.height / 2
+      mouseX > this.x - halfWidth &&
+      mouseX < this.x + halfWidth &&
+      mouseY > this.y - halfHeight &&
+      mouseY < this.y + halfHeight
     );
+  }
+
+  snapTo(x, y) {
+    this.x = x;
+    this.y = y;
+    this.snapped = true;
   }
 }
 
+class FixedShape {
+  constructor(x, y, img) {
+    this.x = x;
+    this.y = y;
+    this.img = img;
+  }
+
+  display() {
+    imageMode(CENTER);
+    image(this.img, this.x, this.y);
+  }
+}
 
