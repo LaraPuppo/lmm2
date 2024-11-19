@@ -10,13 +10,28 @@ let rotateSound, snapSound;
 function preload() {
   // Cargar imágenes
   backgroundImg = loadImage('assets/Lenguaje Mul.svg');
-  rectImg = loadImage('assets/componentes/img2.png');
-  circleImg = loadImage('assets/componentes/img3.png');
-  batteryImg = loadImage('assets/componentes/img4.png');
+  Img2 = loadImage('assets/componentes/img2.png');
+  Img3 = loadImage('assets/componentes/img3.png');
+  Img4 = loadImage('assets/componentes/img4.png');
+  Img4 = loadImage('assets/componentes/img4.png');
+  Img5 = loadImage('assets/componentes/img5.png');
+  Img6 = loadImage('assets/componentes/img6.png');
+  Img7 = loadImage('assets/componentes/img7.png');
+  Img8 = loadImage('assets/componentes/img8.png');
+  Img9 = loadImage('assets/componentes/img9.png');
+  Img10 = loadImage('assets/componentes/img10.png');
+  Img11 = loadImage('assets/componentes/img11.png');
+  Img12 = loadImage('assets/componentes/img12.png');
+  Img13 = loadImage('assets/componentes/img13.png');
+  Img14 = loadImage('assets/componentes/img14.png');
+  Img15 = loadImage('assets/componentes/img15.png');
+  Img16 = loadImage('assets/componentes/img16.png');
+
 
   // Cargar sonidos
   rotateSound = loadSound('assets/sonidos/girar elementos.mp3');
   snapSound = loadSound('assets/sonidos/conexion correcta 1.mp3');
+  errorSound = loadSound ('assets/sonidos/cortocircuitofuerte.mp3');
 }
 
 function setup() {
@@ -226,7 +241,7 @@ class FixedShape {
   constructor(x, y, img, rotation) {
     this.x = x;
     this.y = y;
-    this.img = img; // Almacenamos la imagen de la forma fija
+    this.img = img; // La imagen de la forma fija
     this.rotation = rotation; // En grados
   }
 
@@ -235,6 +250,8 @@ class FixedShape {
     translate(this.x, this.y);
     rotate(radians(this.rotation));
     imageMode(CENTER);
+  
+    
     image(this.img, 0, 0);
     pop();
   }
@@ -248,6 +265,8 @@ class FixedShape {
     return distance < 50 && angleMatch && imgMatch; // Solo se encaja si todo coincide
   }
 }
+
+
 
 
 
