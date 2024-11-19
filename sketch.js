@@ -5,7 +5,6 @@ let currentLevel = 1;
 let currentPage = 0; // Página inicial
 const itemsPerPage = 4; // Número de imágenes por página
 
-
 // Variables para las imágenes y sonidos
 let backgroundImg, rectImg, circleImg, batteryImg;
 let rotateSound, snapSound;
@@ -30,11 +29,13 @@ function preload() {
   Img15 = loadImage('assets/componentes/img15.png');
   Img16 = loadImage('assets/componentes/img16.png');
 
-
   // Cargar sonidos
   rotateSound = loadSound('assets/sonidos/girar elementos.mp3');
   snapSound = loadSound('assets/sonidos/conexion correcta 1.mp3');
-  errorSound = loadSound ('assets/sonidos/cortocircuitofuerte.mp3');
+  errorSound = loadSound('assets/sonidos/cortocircuitofuerte.mp3');
+
+  // Verificación de carga
+  console.log('Verificación de imágenes cargadas:', Img1, Img2, Img3);
 }
 
 function setup() {
@@ -54,20 +55,17 @@ function draw() {
   // Dibuja las formas arrastrables
   drawHUD();
 
-
   // Verifica si todas las piezas están encastradas
   checkIfAllSnapped();
 }
 
-
-
 function initHUD() {
   hudShapes = [
-    new DraggableShape(0, 0, Img2, 45),
-    new DraggableShape(0, 0, Img3, 90),
-    new DraggableShape(0, 0, Img4, 0),
-    new DraggableShape(0, 0, Img5, 0),
-    new DraggableShape(0, 0, Img6, 0),
+    new DraggableShape(550, 100, Img2, 0),
+    new DraggableShape(670, 100, Img3, 0),
+    new DraggableShape(790, 100, Img4, 0),
+    new DraggableShape(910, 100, Img5, 0),
+    new DraggableShape(910, 100, Img6, 0),
     new DraggableShape(0, 0, Img7, 0),
     new DraggableShape(0, 0, Img8, 0),
     new DraggableShape(0, 0, Img9, 0),
@@ -80,7 +78,6 @@ function initHUD() {
     new DraggableShape(0, 0, Img16, 0),
   ];
 }
-
 
 function loadLevel(level) {
   if (level === 1) {
@@ -107,13 +104,10 @@ function loadLevel(level) {
   }
 }
 
-
-
-
 function drawHUD() {
   // Dibujar el fondo del HUD
-  imageMode(CORNER); // Dibuja desde la esquina superior izquierda
-  image(Img1, 540, 20); // Ajusta la altura según el diseño del HUD
+  imageMode(CORNER); 
+  image(Img1, 540, 20);
 
   // Determina el rango de imágenes visibles según la página actual
   const startIndex = currentPage * itemsPerPage;
@@ -122,34 +116,21 @@ function drawHUD() {
   // Solo muestra las imágenes dentro del rango de la página actual
   hudShapes.slice(startIndex, endIndex).forEach((shape, index) => {
     // Reposiciona las imágenes visibles en el HUD
-    shape.x = 100 + index * 100; // Espaciado horizontal
-    shape.y = 60; // Fija la altura
-    shape.display();
+    shape.x = 550 + index * 120; // Ajusta esta coordenada según la posición horizontal del HUD
+shape.y = 100; // Ajusta esta coordenada según la altura del HUD
+
+    shape.update(); // Usamos `update` para dibujar y actualizar
   });
-}
 
-
-
-
-
-function drawBaseShapes() {
-  baseShapes.forEach(shape => shape.display());
-}
-
-function drawDraggableShapes() {
-  hudShapes.forEach(shape => {
-    shape.update();
-  });
+  // Depuración
+  console.log('HUD shapes visibles:', hudShapes.slice(startIndex, endIndex));
 }
 
 function checkIfAllSnapped() {
-  // Verifica si todas las formas fijas están encastradas
   if (baseShapes.every(shape => shape.snapped)) {
-    currentLevel++; // Avanza al siguiente nivel
-
+    currentLevel++;
     if (currentLevel > 3) {
       console.log("Juego completado. Todos los niveles terminados.");
-      // Puedes mostrar un mensaje final aquí o reiniciar el juego
     } else {
       console.log(`Nivel ${currentLevel - 1} completado. Cambia al nivel ${currentLevel}.`);
       transitionToNextLevel();
@@ -157,32 +138,12 @@ function checkIfAllSnapped() {
   }
 }
 
-
 function transitionToNextLevel() {
-  // Limpia las formas encastradas del HUD
   hudShapes = hudShapes.filter(shape => !baseShapes.some(base => base.isSnapped(shape)));
-
-  // Limpia las bases del nivel anterior
   baseShapes = [];
-
-  // Carga las formas del siguiente nivel
   loadLevel(currentLevel);
-
   console.log(`Iniciando el nivel ${currentLevel}`);
 }
-
-
-
-
-
-
-function resetSnappedShapes() {
-  hudShapes.forEach(shape => {
-    shape.snapped = false;
-    shape.restoreOriginalPosition();
-  });
-}
-
 
 function mousePressed() {
   hudShapes.forEach(shape => {
@@ -206,74 +167,25 @@ function mouseDragged() {
 function mouseReleased() {
   if (selectedShape) {
     selectedShape.dragging = false;
-
     let snapped = false;
-
     baseShapes.forEach(baseShape => {
       if (baseShape.isSnapped(selectedShape)) {
-        // Ajusta la posición del shape draggable al shape fijo
         selectedShape.x = baseShape.x;
         selectedShape.y = baseShape.y;
-        baseShape.snapped = true; // Marca el shape fijo como encastrado
+        baseShape.snapped = true; 
         snapSound.play();
         snapped = true;
       }
     });
-
-    // Si no se encastró, restaura su posición original
-    if (!snapped) {
-      selectedShape.restoreOriginalPosition();
-    }
-
+    if (!snapped) selectedShape.restoreOriginalPosition();
     selectedShape = null;
-
-    // Verifica si todas las formas fijas están encastradas
     checkIfAllSnapped();
   }
 }
 
-
-
-
-function keyPressed() {
-  if (selectedShape) {
-    if (key === 'A' || key === 'a') {
-      // Rotar -45 grados
-      selectedShape.rotation = (selectedShape.rotation - 45 + 360) % 360;
-      rotateSound.play();
-    } else if (key === 'D' || key === 'd') {
-      // Rotar +45 grados
-      selectedShape.rotation = (selectedShape.rotation + 45) % 360;
-      rotateSound.play();
-    }
-  } else {
-    // Cambiar páginas del HUD
-    if (key === 'A' || key === 'a') {
-      // Ir a la página anterior (si existe)
-      if (currentPage > 0) {
-        currentPage--;
-        console.log(`Página actual: ${currentPage + 1}`);
-      }
-    } else if (key === 'D' || key === 'd') {
-      // Ir a la página siguiente (si existe)
-      if ((currentPage + 1) * itemsPerPage < hudShapes.length) {
-        currentPage++;
-        console.log(`Página actual: ${currentPage + 1}`);
-      }
-    }
-  }
-}
-
-
-
-
-
-
-
-
 class DraggableShape {
   constructor(x, y, img, rotation) {
-    this.originalX = x; // Guardamos la posición original
+    this.originalX = x;
     this.originalY = y;
     this.x = x;
     this.y = y;
@@ -284,18 +196,12 @@ class DraggableShape {
     this.offsetY = 0;
   }
 
-  // Método para restaurar la posición original
   restoreOriginalPosition() {
     this.x = this.originalX;
     this.y = this.originalY;
   }
 
   update() {
-    if (this.dragging) {
-      this.x = mouseX + this.offsetX;
-      this.y = mouseY + this.offsetY;
-    }
-
     push();
     translate(this.x, this.y);
     rotate(radians(this.rotation));
@@ -305,23 +211,25 @@ class DraggableShape {
   }
 
   contains(mx, my) {
-    const d = dist(mx, my, this.x, this.y);
-    return d < 50; // Ajustar según el tamaño de las imágenes
+    const imgWidth = this.img.width / 2; // Tamaño de la imagen
+    const imgHeight = this.img.height / 2;
+    
+    return (
+      mx > this.x - imgWidth &&
+      mx < this.x + imgWidth &&
+      my > this.y - imgHeight &&
+      my < this.y + imgHeight
+    );
   }
-
-  rotate() {
-    this.rotation = (this.rotation + 45) % 360; // Incrementa 45 grados
-    rotateSound.play();
-  }
+  
 }
-
 
 class FixedShape {
   constructor(x, y, img, rotation) {
     this.x = x;
     this.y = y;
-    this.img = img; // La imagen de la forma fija
-    this.rotation = rotation; // En grados
+    this.img = img;
+    this.rotation = rotation;
   }
 
   display() {
@@ -329,7 +237,7 @@ class FixedShape {
     translate(this.x, this.y);
     rotate(radians(this.rotation));
     imageMode(CENTER);
-    tint (255,100);
+    tint(255, 100);
     image(this.img, 0, 0);
     pop();
   }
@@ -338,16 +246,6 @@ class FixedShape {
     const distance = dist(this.x, this.y, draggable.x, draggable.y);
     const angleMatch = this.rotation === draggable.rotation;
     const imgMatch = this.img === draggable.img;
-  
-    return distance < 50 && angleMatch && imgMatch; // Devuelve true si está encastrado
+    return distance < 50 && angleMatch && imgMatch;
   }
-  
 }
-
-
-
-
-
-
-
-
