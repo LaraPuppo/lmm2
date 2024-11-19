@@ -143,18 +143,28 @@ function mouseReleased() {
   if (selectedShape) {
     selectedShape.dragging = false;
 
+    let snapped = false;
+
     baseShapes.forEach(baseShape => {
       if (baseShape.isSnapped(selectedShape)) {
         // Ajusta la posición del shape draggable al shape fijo
         selectedShape.x = baseShape.x;
         selectedShape.y = baseShape.y;
         snapSound.play();
+        snapped = true; // Marca que se ha encajado correctamente
       }
     });
+
+    // Si no se ha encajado, restauramos la posición original
+    if (!snapped) {
+      selectedShape.restoreOriginalPosition();
+    }
 
     selectedShape = null;
   }
 }
+
+
 
 function keyPressed() {
   if (key === 'r' || key === 'R') {
@@ -169,13 +179,21 @@ function keyPressed() {
 
 class DraggableShape {
   constructor(x, y, img, rotation) {
+    this.originalX = x; // Guardamos la posición original
+    this.originalY = y;
     this.x = x;
     this.y = y;
     this.img = img;
-    this.rotation = rotation; // En grados
+    this.rotation = rotation;
     this.dragging = false;
     this.offsetX = 0;
     this.offsetY = 0;
+  }
+
+  // Método para restaurar la posición original
+  restoreOriginalPosition() {
+    this.x = this.originalX;
+    this.y = this.originalY;
   }
 
   update() {
@@ -203,11 +221,12 @@ class DraggableShape {
   }
 }
 
+
 class FixedShape {
   constructor(x, y, img, rotation) {
     this.x = x;
     this.y = y;
-    this.img = img;
+    this.img = img; // Almacenamos la imagen de la forma fija
     this.rotation = rotation; // En grados
   }
 
@@ -221,11 +240,15 @@ class FixedShape {
   }
 
   isSnapped(draggable) {
+    // Comprobamos la distancia, la rotación y que las imágenes sean iguales
     const distance = dist(this.x, this.y, draggable.x, draggable.y);
     const angleMatch = this.rotation === draggable.rotation;
-    return distance < 50 && angleMatch; // Ajustar la distancia según sea necesario
+    const imgMatch = this.img === draggable.img; // Comparamos las imágenes
+
+    return distance < 50 && angleMatch && imgMatch; // Solo se encaja si todo coincide
   }
 }
+
 
 
 
