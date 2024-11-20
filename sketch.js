@@ -1,17 +1,15 @@
 let hudShapes = [];
 let baseShapes = [];
 let selectedShape = null;
-let currentLevel = 1;
-let currentPage = 0; // Página inicial
-const itemsPerPage = 4; // Número de imágenes por página
-
-// Variables para las imágenes y sonidos
-let backgroundImg, rectImg, circleImg, batteryImg;
-let rotateSound, snapSound;
+let currentLevel = 0; // Cambié 'level' por 'currentLevel'
+let currentPage = 0; 
+const itemsPerPage = 4;
 
 function preload() {
-  // Cargar imágenes
-  backgroundImg = loadImage('assets/Lenguaje Mul.svg');
+  // Fondo
+  backgroundImg = loadImage('assets/fondo.svg');
+
+  // Componentes
   Img1 = loadImage('assets/componentes/img1.png');
   Img2 = loadImage('assets/componentes/img2.png');
   Img3 = loadImage('assets/componentes/img3.png');
@@ -29,36 +27,41 @@ function preload() {
   Img15 = loadImage('assets/componentes/img15.png');
   Img16 = loadImage('assets/componentes/img16.png');
 
-  // Cargar sonidos
+  // Sonidos
   rotateSound = loadSound('assets/sonidos/girar elementos.mp3');
   snapSound = loadSound('assets/sonidos/conexion correcta 1.mp3');
   errorSound = loadSound('assets/sonidos/cortocircuitofuerte.mp3');
 
-  // Verificación de carga
-  console.log('Verificación de imágenes cargadas:', Img1, Img2, Img3);
+  // Animaciones
+  inicio = createVideo(['assets/animaciones/inicio.mp4']);
+  final = createVideo(['assets/animaciones/final.mp4']);
 }
 
 function setup() {
   createCanvas(innerWidth, innerHeight);
   initHUD();
   loadLevel(currentLevel);
+  inicio.size(width, height); // Ajusta el tamaño del video a la ventana
 }
 
 function draw() {
-  // Redibuja el fondo en cada fotograma
-  imageMode(CORNER);
-  image(backgroundImg, 0, 0, width, height);
+  if (currentLevel === 0) {
+    inicio.loop(); // Reproduce el video mientras estamos en el nivel 0
+  } else if (currentLevel >= 1) {
+    // Redibuja el fondo en cada fotograma
+    imageMode(CORNER);
+    image(backgroundImg, 0, 0, width, height);
 
-  // Dibuja las formas fijas
-  baseShapes.forEach(shape => shape.display());
+    // Dibuja las formas fijas
+    baseShapes.forEach(shape => shape.display());
 
-  // Dibuja las formas arrastrables
-  drawHUD();
+    // Dibuja las formas arrastrables
+    drawHUD();
 
-  // Verifica si todas las piezas están encastradas
-  checkIfAllSnapped();
+    // Verifica si todas las piezas están encastradas
+    checkIfAllSnapped();
+  }
 }
-
 
 function initHUD() {
   hudShapes = [
@@ -82,6 +85,7 @@ function initHUD() {
 
 function loadLevel(level) {
   if (level === 1) {
+    // Asegurémonos de que las imágenes sean las correctas para el nivel 1
     baseShapes = [
       new FixedShape(300, height - 150, Img2, 0),
       new FixedShape(450, height - 150, Img3, 0),
@@ -89,6 +93,7 @@ function loadLevel(level) {
       new FixedShape(750, height - 150, Img5, 0),
     ];
   } else if (level === 2) {
+
     baseShapes = [
       new FixedShape(350, height - 200, Img6, 0),
       new FixedShape(500, height - 200, Img7, 0),
@@ -96,14 +101,24 @@ function loadLevel(level) {
       new FixedShape(800, height - 200, Img9, 0),
     ];
   } else if (level === 3) {
+    // Cargar las imágenes para el nivel 3
     baseShapes = [
       new FixedShape(350, height - 200, Img10, 0),
       new FixedShape(500, height - 200, Img11, 0),
       new FixedShape(650, height - 200, Img12, 0),
       new FixedShape(800, height - 200, Img13, 0),
     ];
+  } else if (level === 4) {
+    // Cargar las imágenes para el nivel 3
+    baseShapes = [
+      new FixedShape(350, height - 200, Img14, 0),
+      new FixedShape(500, height - 200, Img15, 0),
+      new FixedShape(650, height - 200, Img16, 0),
+    ];
   }
 }
+
+
 
 function drawHUD() {
   const startIndex = currentPage * itemsPerPage;
@@ -128,7 +143,7 @@ function drawHUD() {
 function checkIfAllSnapped() {
   if (baseShapes.every(shape => shape.snapped)) {
     currentLevel++;
-    if (currentLevel > 3) {
+    if (currentLevel > 4) {
       console.log("Juego completado. Todos los niveles terminados.");
     } else {
       console.log(`Nivel ${currentLevel - 1} completado. Cambia al nivel ${currentLevel}.`);
@@ -153,22 +168,31 @@ function transitionToNextLevel() {
 
 
 function mousePressed() {
-  const startIndex = currentPage * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  
-  hudShapes.slice(startIndex, endIndex).forEach(shape => {
-    if (shape.contains(mouseX, mouseY) && !shape.snapped) { // Solo seleccionar si no está encastrada
-      selectedShape = shape;
-      shape.dragging = true;
-      shape.offsetX = shape.x - mouseX;
-      shape.offsetY = shape.y - mouseY;
-    }
-  });
+  if (currentLevel === 0) {
+    currentLevel = 1;  // Pasamos al nivel 1
+    inicio.stop();      // Detenemos la animación del inicio
+    transitionToNextLevel(); // Llamamos para cargar las nuevas formas para el nivel 1
+  }
 
-  if (selectedShape && !selectedShape.snapped) {
-    selectedShape.restoreOriginalPosition(); // Si no está encastrada, vuelve a la posición original
+  if (currentLevel >= 1) {
+    const startIndex = currentPage * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+    hudShapes.slice(startIndex, endIndex).forEach(shape => {
+      if (shape.contains(mouseX, mouseY) && !shape.snapped) { // Solo seleccionar si no está encastrada
+        selectedShape = shape;
+        shape.dragging = true;
+        shape.offsetX = shape.x - mouseX;
+        shape.offsetY = shape.y - mouseY;
+      }
+    });
+
+    if (selectedShape && !selectedShape.snapped) {
+      selectedShape.restoreOriginalPosition(); // Si no está encastrada, vuelve a la posición original
+    }
   }
 }
+
 
 
 
