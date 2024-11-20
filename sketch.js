@@ -59,23 +59,24 @@ function draw() {
   checkIfAllSnapped();
 }
 
+
 function initHUD() {
   hudShapes = [
-    new DraggableShape(550, 100, Img2, 0),
-    new DraggableShape(670, 100, Img3, 0),
-    new DraggableShape(790, 100, Img4, 0),
-    new DraggableShape(910, 100, Img5, 0),
-    new DraggableShape(910, 100, Img6, 0),
-    new DraggableShape(0, 0, Img7, 0),
-    new DraggableShape(0, 0, Img8, 0),
-    new DraggableShape(0, 0, Img9, 0),
-    new DraggableShape(0, 0, Img10, 0),
-    new DraggableShape(0, 0, Img11, 0),
-    new DraggableShape(0, 0, Img12, 0),
-    new DraggableShape(0, 0, Img13, 0),
-    new DraggableShape(0, 0, Img14, 0),
-    new DraggableShape(0, 0, Img15, 0),
-    new DraggableShape(0, 0, Img16, 0),
+    new DraggableShape(700, 60, Img2, 180),
+    new DraggableShape(850, 60, Img3, 90),
+    new DraggableShape(1000, 60, Img4, 180),
+    new DraggableShape(1150, 60, Img5, -90),
+    new DraggableShape(700, 60, Img6, 180),
+    new DraggableShape(850, 60, Img7, 0),
+    new DraggableShape(1000, 60, Img8, 0),
+    new DraggableShape(1150, 60, Img9, 0),
+    new DraggableShape(700, 60, Img10, 0),
+    new DraggableShape(850, 60, Img11, 0),
+    new DraggableShape(1000, 60, Img12, 0),
+    new DraggableShape(1150, 60, Img13, 0),
+    new DraggableShape(700, 60, Img14, 0),
+    new DraggableShape(850, 60, Img15, 0),
+    new DraggableShape(1000, 60, Img16, 0),
   ];
 }
 
@@ -105,26 +106,24 @@ function loadLevel(level) {
 }
 
 function drawHUD() {
-  // Dibujar el fondo del HUD
-  imageMode(CORNER); 
-  image(Img1, 540, 20);
-
-  // Determina el rango de imágenes visibles según la página actual
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
-  // Solo muestra las imágenes dentro del rango de la página actual
+  imageMode(CORNER);
+  image(Img1, 540, 20);
+
   hudShapes.slice(startIndex, endIndex).forEach((shape, index) => {
-    // Reposiciona las imágenes visibles en el HUD
-    shape.x = 550 + index * 120; // Ajusta esta coordenada según la posición horizontal del HUD
-shape.y = 100; // Ajusta esta coordenada según la altura del HUD
+    // No reasignar las posiciones originales aquí si ya están definidas
+    if (shape.originalX == null || shape.originalY == null) {
+      shape.originalX = shape.x;
+      shape.originalY = shape.y;
+    }
 
-    shape.update(); // Usamos `update` para dibujar y actualizar
+    shape.update();
   });
-
-  // Depuración
-  console.log('HUD shapes visibles:', hudShapes.slice(startIndex, endIndex));
 }
+
+
 
 function checkIfAllSnapped() {
   if (baseShapes.every(shape => shape.snapped)) {
@@ -138,6 +137,13 @@ function checkIfAllSnapped() {
   }
 }
 
+function resetSnappedShapes() {
+  hudShapes.forEach(shape => {
+    shape.snapped = false;
+    shape.restoreOriginalPosition();
+  });
+}
+
 function transitionToNextLevel() {
   hudShapes = hudShapes.filter(shape => !baseShapes.some(base => base.isSnapped(shape)));
   baseShapes = [];
@@ -145,16 +151,27 @@ function transitionToNextLevel() {
   console.log(`Iniciando el nivel ${currentLevel}`);
 }
 
+
 function mousePressed() {
-  hudShapes.forEach(shape => {
-    if (shape.contains(mouseX, mouseY)) {
+  const startIndex = currentPage * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  
+  hudShapes.slice(startIndex, endIndex).forEach(shape => {
+    if (shape.contains(mouseX, mouseY) && !shape.snapped) { // Solo seleccionar si no está encastrada
       selectedShape = shape;
       shape.dragging = true;
       shape.offsetX = shape.x - mouseX;
       shape.offsetY = shape.y - mouseY;
     }
   });
+
+  if (selectedShape && !selectedShape.snapped) {
+    selectedShape.restoreOriginalPosition(); // Si no está encastrada, vuelve a la posición original
+  }
 }
+
+
+
 
 function mouseDragged() {
   if (selectedShape && !selectedShape.snapped) {
@@ -168,61 +185,112 @@ function mouseReleased() {
   if (selectedShape) {
     selectedShape.dragging = false;
     let snapped = false;
+
+    // Verificar si encastra en alguna posición fija
     baseShapes.forEach(baseShape => {
       if (baseShape.isSnapped(selectedShape)) {
         selectedShape.x = baseShape.x;
         selectedShape.y = baseShape.y;
-        baseShape.snapped = true; 
+        baseShape.snapped = true;
         snapSound.play();
         snapped = true;
       }
     });
-    if (!snapped) selectedShape.restoreOriginalPosition();
+
+    // Si no encastra, regresa a su posición original
+    if (!snapped) {
+      selectedShape.restoreOriginalPosition(); // Restablecer posición original
+      // errorSound.play();
+    }
+
+    // Reiniciar selección
     selectedShape = null;
-    checkIfAllSnapped();
   }
 }
+
+
+
+function keyPressed() {
+  if (selectedShape) {
+    // Si hay una forma seleccionada, rotarla
+    if (key === 'A' || key === 'a') {
+      // Rotar -45 grados
+      selectedShape.rotation = (selectedShape.rotation - 45 + 360) % 360;
+      rotateSound.play();
+    } else if (key === 'D' || key === 'd') {
+      // Rotar +45 grados
+      selectedShape.rotation = (selectedShape.rotation + 45) % 360;
+      rotateSound.play();
+    }
+  } else {
+    // Si no hay una forma seleccionada, cambiar de página en el HUD
+    if (key === 'A' || key === 'a') {
+      if (currentPage > 0) {
+        currentPage--;
+        console.log(`Página actual: ${currentPage + 1}`);
+      }
+    } else if (key === 'D' || key === 'd') {
+      if ((currentPage + 1) * itemsPerPage < hudShapes.length) {
+        currentPage++;
+        console.log(`Página actual: ${currentPage + 1}`);
+      }
+    }
+  }
+}
+
 
 class DraggableShape {
   constructor(x, y, img, rotation) {
-    this.originalX = x;
-    this.originalY = y;
-    this.x = x;
-    this.y = y;
-    this.img = img;
-    this.rotation = rotation;
-    this.dragging = false;
-    this.offsetX = 0;
-    this.offsetY = 0;
+    this.originalX = x;           // Posición original en el HUD
+    this.originalY = y;           // Posición original en el HUD
+    this.originalRotation = rotation; // Rotación inicial en el HUD
+    this.x = x;                   // Posición actual
+    this.y = y;                   // Posición actual
+    this.img = img;               // Imagen asociada
+    this.rotation = rotation;     // Rotación actual
+    this.dragging = false;        // Si está siendo arrastrada
+    this.offsetX = 0;             // Offset del mouse
+    this.offsetY = 0;             // Offset del mouse
+    this.snapped = false;         // Si la forma está encastrada
   }
 
+  // Restaurar posición y rotación originales
   restoreOriginalPosition() {
-    this.x = this.originalX;
-    this.y = this.originalY;
+    if (!this.snapped) {  // Solo restaurar si no está encastrada
+      this.x = this.originalX;
+      this.y = this.originalY;
+      this.rotation = this.originalRotation; // Restaurar rotación inicial
+    }
   }
 
+  // Dibujar la forma
   update() {
-    push();
-    translate(this.x, this.y);
-    rotate(radians(this.rotation));
-    imageMode(CENTER);
-    image(this.img, 0, 0);
-    pop();
+    if (!this.snapped) {  // No dibujar las formas encastradas
+      push(); // Inicia una nueva pila de transformación
+      translate(this.x, this.y); // Mueve el origen al punto (x, y)
+      rotate(radians(this.rotation)); // Aplica la rotación
+      imageMode(CENTER); // Centra la imagen en (0, 0)
+      image(this.img, 0, 0, this.img.width, this.img.height); // Dibuja la imagen
+      pop(); // Restaura la pila de transformación
+    }
   }
 
+  // Verifica si el mouse está sobre la forma
   contains(mx, my) {
-    const imgWidth = this.img.width / 2; // Tamaño de la imagen
-    const imgHeight = this.img.height / 2;
-    
+    const imgWidth = this.img.width * 0.5; // Ajusta el factor de escala
+    const imgHeight = this.img.height * 0.5;
+
     return (
-      mx > this.x - imgWidth &&
-      mx < this.x + imgWidth &&
-      my > this.y - imgHeight &&
-      my < this.y + imgHeight
+      mx > this.x - imgWidth / 2 &&
+      mx < this.x + imgWidth / 2 &&
+      my > this.y - imgHeight / 2 &&
+      my < this.y + imgHeight / 2
     );
   }
-  
 }
+
+
+
 
 class FixedShape {
   constructor(x, y, img, rotation) {
