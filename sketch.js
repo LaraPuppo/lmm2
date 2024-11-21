@@ -4,10 +4,14 @@ let selectedShape = null;
 let currentLevel = 0; 
 let currentPage = 0; 
 const itemsPerPage = 5;
-let inicio;
-let final;
+// let inicio, final, zoom1, zoom2, zoom3;
 let rotateSound, snapSound, errorSound;
-let currentVideo;
+let zoomFactor = 1;  // Factor de zoom inicial
+let zoomSpeed = 0.04;  // Velocidad de incremento del zoom (puedes ajustarlo)
+let maxZoom = 3; // El zoom máximo que deseas alcanzar
+
+
+
 
 function preload() {
   // Fondo
@@ -40,64 +44,34 @@ function preload() {
   errorSound = loadSound('assets/sonidos/cortocircuitofuerte.mp3');
 
   // Animaciones
-  inicio = createVideo(['assets/animaciones/inicio.mp4']);
-  final = createVideo(['assets/animaciones/final.mp4']);
+  // gifs = {
+  //   inicio: loadImage('assets/animaciones/inicio.gif'),
+  //   zoom1: loadImage('assets/animaciones/zoom1.gif'),
+  //   zoom2: loadImage('assets/animaciones/zoom2.gif'),
+  //   zoom3: loadImage('assets/animaciones/zoom3.gif'),
+  //   // final: loadImage('assets/animaciones/final.gif'),
+  // };
 }
 
 function setup() {
   createCanvas(innerWidth, innerHeight);
   initHUD();
   loadLevel(currentLevel);
-  currentVideo = inicio;
-  currentVideo.size(innerWidth, innerHeight);
-  currentVideo.loop();
-  // inicio.show();  
-  // final.show();   
 }
 
 function draw() {
-  console.log(currentLevel);
   if (currentLevel === 0) {
-    currentVideo = inicio;
-      currentVideo.size(innerWidth, innerHeight);
-      currentVideo.loop(); 
+    drawLevels(backgroundImg);
   } else if (currentLevel === 1) {
-    currentVideo.stop();
-    imageMode(CORNER);
-    image(fondo1, 0, 0, width, height);
-    baseShapes.forEach(shape => shape.display());
-    drawHUD();
-    checkIfAllSnapped();
+    drawLevels(fondo1);
   }  else if (currentLevel === 2) {
-    currentVideo.stop();
-    imageMode(CORNER);
-    image(fondo2, 0, 0, width, height);
-    baseShapes.forEach(shape => shape.display());
-    drawHUD();
-    checkIfAllSnapped();
+    drawLevels(fondo2);
   }else if (currentLevel === 3) {
-    currentVideo.stop();
-    imageMode(CORNER);
-    image(fondo3, 0, 0, width, height);
-    baseShapes.forEach(shape => shape.display());
-    drawHUD();
-    checkIfAllSnapped();
-  }
-  // else if (currentLevel === 4) {
-  //   currentVideo.stop();
-  //   imageMode(CORNER);
-  //   image(backgroundImg, 0, 0, width, height);
-  //   baseShapes.forEach(shape => shape.display());
-  //   drawHUD();
-  //   checkIfAllSnapped();
-  // }else if (currentLevel === 5) {
-  //   currentVideo = final;
-  //   currentVideo.size(innerWidth, innerHeight);
-  //   currentVideo.loop();  
-  // }
+    drawLevels(fondo3);
+  } else if (currentLevel === 4) {
+    
+   }
 }
-
-
 
 function initHUD() {
   hudShapes = [
@@ -122,7 +96,7 @@ function initHUD() {
 function loadLevel(level) {
   if (level === 1) {
     baseShapes = [
-      new FixedShape(330, 230, Img2, 0, 3.3,3.1),
+      new FixedShape(330, 230, Img2, 0, 3.3, 3.1),
       new FixedShape(450, height - 150, Img3, 0),
       new FixedShape(600, height - 150, Img4, 0),
       new FixedShape(750, height - 150, Img5, 0),
@@ -147,23 +121,67 @@ function loadLevel(level) {
   }
 }
 
+
 function drawHUD() {
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-
   imageMode(CORNER);
   image(Img1, 20, 20);
-
   hudShapes.slice(startIndex, endIndex).forEach((shape, index) => {
-    // No reasignar las posiciones originales aquí si ya están definidas
     if (shape.originalX == null || shape.originalY == null) {
       shape.originalX = shape.x;
       shape.originalY = shape.y;
     }
-
     shape.update();
   });
 }
+
+function drawLevels() {
+  imageMode(CORNER);
+
+  if (currentLevel === 0) {
+    // Mostrar la imagen completa (sin zoom)
+    image(backgroundImg, 0, 0, width, height);
+  } else if (currentLevel === 1) {
+    // Zoom a la esquina superior izquierda (nivel 1)
+    push();
+    translate(-width * 0.5, -height * 0.5); // Desplazar para hacer zoom en la esquina superior izquierda
+    zoomFactor += zoomSpeed; // Aumenta gradualmente el zoom
+    if (zoomFactor > maxZoom) {
+      zoomFactor = maxZoom; // Limitar el zoom para que no siga aumentando
+    }
+    scale(zoomFactor); // Aplica el zoom
+    image(backgroundImg, 0, 0, width, height);
+    pop();
+  } else if (currentLevel === 2) {
+    // Zoom out (nivel 2)
+    push();
+    translate(-width * 0.1, -height * 0.1); // Desplazar un poco para mantener el enfoque
+    zoomFactor += zoomSpeed * 0.8; // Reducción del zoom (más suave que el nivel 1)
+    if (zoomFactor > maxZoom) {
+      zoomFactor = maxZoom; // Limitar el zoom
+    }
+    scale(zoomFactor); // Aplica el zoom
+    image(backgroundImg, 0, 0, width, height);
+    pop();
+  } else if (currentLevel === 3) {
+    // Zoom out más (nivel 3)
+    push();
+    translate(-width * 0.05, -height * 0.05); // Menos desplazamiento
+    zoomFactor += zoomSpeed * 0.5; // Menos incremento del zoom
+    if (zoomFactor > maxZoom) {
+      zoomFactor = maxZoom; // Limitar el zoom
+    }
+    scale(zoomFactor); // Aplica el zoom
+    image(backgroundImg, 0, 0, width, height);
+    pop();
+  }
+
+  baseShapes.forEach(shape => shape.display());
+  drawHUD();
+  checkIfAllSnapped();
+}
+
 
 function checkIfAllSnapped() {
   if (baseShapes.every(shape => shape.snapped)) {
@@ -179,11 +197,13 @@ function resetSnappedShapes() {
   });
 }
 
-function transitionToNextLevel() {
+ function transitionToNextLevel() {
   hudShapes = hudShapes.filter(shape => !baseShapes.some(base => base.isSnapped(shape)));
   baseShapes = [];
-  loadLevel(currentLevel);
-}
+   loadLevel(currentLevel);
+  }
+  
+
 
 function mousePressed() {
   if (currentLevel === 0) {
@@ -191,7 +211,7 @@ function mousePressed() {
     transitionToNextLevel();
   }
 
-  if (currentLevel === 1 || currentLevel === 2 || currentLevel === 3 || currentLevel === 4) {
+  if (currentLevel === 1 || currentLevel === 2 || currentLevel === 3) {
     const startIndex = currentPage * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
 
@@ -245,10 +265,6 @@ function mouseReleased() {
     selectedShape = null;
   }
 }
-
-
-
-
 
 
 function keyPressed() {
