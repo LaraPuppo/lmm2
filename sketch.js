@@ -14,6 +14,7 @@ function preload() {
   backgroundImg = loadImage('assets/fondo.svg');
   fondo1 = loadImage('assets/fondo1.jpg');
   fondo2 = loadImage('assets/fondo2.jpg');
+  fondo3 = loadImage('assets/fondo3.jpg');
 
   // Componentes
   Img1 = loadImage('assets/componentes/img1.png');
@@ -77,50 +78,51 @@ function draw() {
   }else if (currentLevel === 3) {
     currentVideo.stop();
     imageMode(CORNER);
-    image(backgroundImg, 0, 0, width, height);
+    image(fondo3, 0, 0, width, height);
     baseShapes.forEach(shape => shape.display());
     drawHUD();
     checkIfAllSnapped();
-  }else if (currentLevel === 4) {
-    currentVideo.stop();
-    imageMode(CORNER);
-    image(backgroundImg, 0, 0, width, height);
-    baseShapes.forEach(shape => shape.display());
-    drawHUD();
-    checkIfAllSnapped();
-  }else if (currentLevel === 5) {
-    currentVideo = final;
-    currentVideo.size(innerWidth, innerHeight);
-    currentVideo.loop();  
   }
+  // else if (currentLevel === 4) {
+  //   currentVideo.stop();
+  //   imageMode(CORNER);
+  //   image(backgroundImg, 0, 0, width, height);
+  //   baseShapes.forEach(shape => shape.display());
+  //   drawHUD();
+  //   checkIfAllSnapped();
+  // }else if (currentLevel === 5) {
+  //   currentVideo = final;
+  //   currentVideo.size(innerWidth, innerHeight);
+  //   currentVideo.loop();  
+  // }
 }
 
 
 
 function initHUD() {
   hudShapes = [
-    new DraggableShape(120, 60, Img2, 0),
+    new DraggableShape(120, 60, Img2, 0, 1.2, 1.2),
     new DraggableShape(250, 60, Img3, 0),
     new DraggableShape(390, 60, Img4, 0),
     new DraggableShape(550, 60, Img5, 0),
     new DraggableShape(650, 60, Img6, 0),
-    new DraggableShape(850, 60, Img7, 0),
-    new DraggableShape(1000, 60, Img8, 0),
-    new DraggableShape(1150, 60, Img9, 0),
-    new DraggableShape(700, 60, Img10, 0),
-    new DraggableShape(850, 60, Img11, 0),
-    new DraggableShape(1000, 60, Img12, 0),
-    new DraggableShape(1150, 60, Img13, 0),
-    new DraggableShape(700, 60, Img14, 0),
-    new DraggableShape(850, 60, Img15, 0),
-    new DraggableShape(1000, 60, Img16, 0),
+    new DraggableShape(120, 60, Img7, 0),
+    new DraggableShape(250, 60, Img8, 0),
+    new DraggableShape(390, 60, Img9, 0),
+    new DraggableShape(550, 60, Img10, 0),
+    new DraggableShape(650, 60, Img11, 0),
+    new DraggableShape(120, 60, Img12, 0),
+    new DraggableShape(250, 60, Img13, 0),
+    new DraggableShape(390, 60, Img14, 0),
+    new DraggableShape(550, 60, Img15, 0),
+    new DraggableShape(650, 60, Img16, 0),
   ];
 }
 
 function loadLevel(level) {
   if (level === 1) {
     baseShapes = [
-      new FixedShape(210, 210, Img2, 0),
+      new FixedShape(330, 230, Img2, 0, 3.3,3.1),
       new FixedShape(450, height - 150, Img3, 0),
       new FixedShape(600, height - 150, Img4, 0),
       new FixedShape(750, height - 150, Img5, 0),
@@ -131,8 +133,8 @@ function loadLevel(level) {
       new FixedShape(500, height - 200, Img7, 0),
       new FixedShape(650, height - 200, Img8, 0),
       new FixedShape(800, height - 200, Img9, 0),
-      new FixedShape(350, height - 200, Img10, 0),
-      new FixedShape(500, height - 200, Img11, 0),
+      new FixedShape(350, height - 400, Img10, 0),
+      new FixedShape(500, height - 400, Img11, 0),
     ];
   } else if (level === 3) {
     baseShapes = [
@@ -140,7 +142,7 @@ function loadLevel(level) {
       new FixedShape(800, height - 200, Img13, 0),
       new FixedShape(350, height - 200, Img14, 0),
       new FixedShape(500, height - 200, Img15, 0),
-      new FixedShape(650, height - 200, Img16, 0),
+      new FixedShape(650, height - 400, Img16, 0),
     ];
   }
 }
@@ -227,7 +229,7 @@ function mouseReleased() {
         selectedShape.x = baseShape.x;
         selectedShape.y = baseShape.y;
         baseShape.snapped = true;  // Marcar la forma fija como encastrada
-        baseShape.opacity = 255;   // Asegurarse de que la opacidad de la forma fija sea 100%
+        baseShape.opacity = 255;   // Asegurar opacidad total
         snapSound.play();
         snapped = true;
       }
@@ -235,14 +237,15 @@ function mouseReleased() {
 
     // Si no encastra, regresa a su posición original
     if (!snapped) {
-      selectedShape.restoreOriginalPosition(); // Restablecer posición original
-      // errorSound.play();
+      selectedShape.restoreOriginalPosition(); // Volver a la posición original
+      // errorSound.play(); 
     }
 
     // Reiniciar selección
     selectedShape = null;
   }
 }
+
 
 
 
@@ -276,7 +279,7 @@ function keyPressed() {
 
 
 class DraggableShape {
-  constructor(x, y, img, rotation) {
+  constructor(x, y, img, rotation, scaleX = 1, scaleY = 1) {
     this.originalX = x;           // Posición original en el HUD
     this.originalY = y;           // Posición original en el HUD
     this.originalRotation = rotation; // Rotación inicial en el HUD
@@ -288,78 +291,74 @@ class DraggableShape {
     this.offsetX = 0;             // Offset del mouse
     this.offsetY = 0;             // Offset del mouse
     this.snapped = false;         // Si la forma está encastrada
+    this.scaleX = scaleX;         // Escala horizontal
+    this.scaleY = scaleY;         // Escala vertical
   }
 
-  // Restaurar posición y rotación originales
   restoreOriginalPosition() {
-    if (!this.snapped) {  // Solo restaurar si no está encastrada
+    // Solo restaurar si no está encastrada
+    if (!this.snapped) {
       this.x = this.originalX;
       this.y = this.originalY;
       this.rotation = this.originalRotation; // Restaurar rotación inicial
     }
   }
 
-  // Dibujar la forma
   update() {
-    // Dibujar siempre la imagen, incluso si está encastrada
-    push(); // Inicia una nueva pila de transformación
-    translate(this.x, this.y); // Mueve el origen al punto (x, y)
-    rotate(radians(this.rotation)); // Aplica la rotación
-    imageMode(CENTER); // Centra la imagen en (0, 0)
-    image(this.img, 0, 0, this.img.width, this.img.height); // Dibuja la imagen
-    pop(); // Restaura la pila de transformación
+    push();
+    translate(this.x, this.y);
+    rotate(radians(this.rotation));
+    scale(this.scaleX, this.scaleY); // Aplicar escala
+    imageMode(CENTER);
+    image(this.img, 0, 0);
+    pop();
   }
-  
 
-  // Verifica si el mouse está sobre la forma
   contains(mx, my) {
-    const imgWidth = this.img.width * 0.5; // Ajusta el factor de escala
-    const imgHeight = this.img.height * 0.5;
+    const scaledWidth = this.img.width * this.scaleX;
+    const scaledHeight = this.img.height * this.scaleY;
 
     return (
-      mx > this.x - imgWidth / 2 &&
-      mx < this.x + imgWidth / 2 &&
-      my > this.y - imgHeight / 2 &&
-      my < this.y + imgHeight / 2
+      mx > this.x - scaledWidth / 2 &&
+      mx < this.x + scaledWidth / 2 &&
+      my > this.y - scaledHeight / 2 &&
+      my < this.y + scaledHeight / 2
     );
   }
 }
 
 
+
+
 class FixedShape {
-  constructor(x, y, img, rotation) {
+  constructor(x, y, img, rotation, scaleX = 1, scaleY = 1) {
     this.x = x;
     this.y = y;
     this.img = img;
     this.rotation = rotation;
-    this.opacity = 100;  // Inicialmente la opacidad es baja (50%)
-    this.snapped = false; // Estado si la forma está encastrada
+    this.opacity = 100;
+    this.snapped = false;
+    this.scaleX = scaleX;
+    this.scaleY = scaleY;
   }
 
   display() {
     push();
     translate(this.x, this.y);
     rotate(radians(this.rotation));
+    scale(this.scaleX, this.scaleY); // Aplica la escala
     imageMode(CENTER);
-
-    // Si la imagen está encastrada, la opacidad se pone al 100%
-    if (this.snapped) {
-      this.opacity = 255;  // Opacidad completa cuando está encastrada
-    } else {
-      this.opacity = 100;  // Opacidad reducida si no está encastrada
-    }
-
-    tint(255, this.opacity);  // Aplicar la opacidad a la imagen
+    tint(255, this.opacity);
     image(this.img, 0, 0);
     pop();
   }
 
   isSnapped(draggable) {
-    // Compara la distancia, el ángulo y la imagen para determinar si se ha encastrado
     const distance = dist(this.x, this.y, draggable.x, draggable.y);
     const angleMatch = this.rotation === draggable.rotation;
     const imgMatch = this.img === draggable.img;
-    return distance < 50 && angleMatch && imgMatch; // Si está cerca de la forma fija
+    return distance < 50 && angleMatch && imgMatch;
   }
 }
+
 
