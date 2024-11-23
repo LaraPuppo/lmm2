@@ -4,18 +4,18 @@ let selectedShape = null;
 let currentLevel = 0; 
 let currentPage = 0; 
 const itemsPerPage = 5;
-// let inicio, final, zoom1, zoom2, zoom3;
 let rotateSound, snapSound, errorSound;
-let zoomFactor = 1;  // Factor de zoom inicial
-let zoomSpeed = 0.04;  // Velocidad de incremento del zoom (puedes ajustarlo)
-let maxZoom = 3; // El zoom máximo que deseas alcanzar
 
-
+let fondoWidth = 2300;  // Tamaño original
+let fondoHeight = (fondoWidth / 16) * 9; // Calcula el alto respetando la relación 16:9
+let fondoScale = 1; // Escala en el Nivel 2
+let targetWidth = 5600; // Ancho objetivo en el Nivel 2
+let targetHeight = (targetWidth / 16) * 9; // Alto objetivo en el Nivel 2
 
 
 function preload() {
   // Fondo
-  backgroundImg = loadImage('assets/fondo.svg');
+  fondo = loadImage('assets/fondo.svg');
   fondo1 = loadImage('assets/fondo1.jpg');
   fondo2 = loadImage('assets/fondo2.jpg');
   fondo3 = loadImage('assets/fondo3.jpg');
@@ -42,34 +42,31 @@ function preload() {
   rotateSound = loadSound('assets/sonidos/girar elementos.mp3');
   snapSound = loadSound('assets/sonidos/conexion correcta 1.mp3');
   errorSound = loadSound('assets/sonidos/cortocircuitofuerte.mp3');
-
-  // Animaciones
-  // gifs = {
-  //   inicio: loadImage('assets/animaciones/inicio.gif'),
-  //   zoom1: loadImage('assets/animaciones/zoom1.gif'),
-  //   zoom2: loadImage('assets/animaciones/zoom2.gif'),
-  //   zoom3: loadImage('assets/animaciones/zoom3.gif'),
-  //   // final: loadImage('assets/animaciones/final.gif'),
-  // };
 }
 
 function setup() {
-  createCanvas(innerWidth, innerHeight);
+  let canvasWidth = 1300;
+  let canvasHeight = (canvasWidth / 16) * 9;;
+
+  
+  createCanvas(canvasWidth, canvasHeight);
   initHUD();
   loadLevel(currentLevel);
 }
 
+
 function draw() {
+  console.log(currentLevel);
   if (currentLevel === 0) {
-    drawLevels(backgroundImg);
+    drawLevels();
   } else if (currentLevel === 1) {
-    drawLevels(fondo1);
+    drawLevels();
   }  else if (currentLevel === 2) {
-    drawLevels(fondo2);
+    drawLevels();
   }else if (currentLevel === 3) {
-    drawLevels(fondo3);
+    drawLevels();
   } else if (currentLevel === 4) {
-    
+    drawLevels();
    }
 }
 
@@ -134,61 +131,98 @@ function drawHUD() {
     }
     shape.update();
   });
+  baseShapes.forEach(shape => shape.display());
+  checkIfAllSnapped();
 }
+
+
 
 function drawLevels() {
   imageMode(CORNER);
 
   if (currentLevel === 0) {
-    // Mostrar la imagen completa (sin zoom)
-    image(backgroundImg, 0, 0, width, height);
+    // Pantalla de inicio
+    background(200);
+    textAlign(CENTER, CENTER);
+    textSize(32);
+    fill(50);
+    text('Presiona el mouse para comenzar', width / 2, height / 2);
   } else if (currentLevel === 1) {
-    // Zoom a la esquina superior izquierda (nivel 1)
-    push();
-    translate(-width * 0.5, -height * 0.5); // Desplazar para hacer zoom en la esquina superior izquierda
-    zoomFactor += zoomSpeed; // Aumenta gradualmente el zoom
-    if (zoomFactor > maxZoom) {
-      zoomFactor = maxZoom; // Limitar el zoom para que no siga aumentando
+    const targetScale = 2.6; // Escala objetivo para el nivel 1
+    const growthRate = 0.01; // Velocidad de crecimiento por fotograma
+
+    if (fondoScale < targetScale) {
+      fondoScale = min(fondoScale + growthRate, targetScale);
     }
-    scale(zoomFactor); // Aplica el zoom
-    image(backgroundImg, 0, 0, width, height);
-    pop();
+
+    const scaledWidth = fondoWidth * fondoScale;
+    const scaledHeight = fondoHeight * fondoScale;
+
+    image(fondo, 0, 0, scaledWidth, scaledHeight);
+    drawHUD();
   } else if (currentLevel === 2) {
-    // Zoom out (nivel 2)
-    push();
-    translate(-width * 0.1, -height * 0.1); // Desplazar un poco para mantener el enfoque
-    zoomFactor += zoomSpeed * 0.8; // Reducción del zoom (más suave que el nivel 1)
-    if (zoomFactor > maxZoom) {
-      zoomFactor = maxZoom; // Limitar el zoom
+    const targetScale = 1.5; // Escala objetivo para el nivel 2
+    const shrinkRate = 0.01; // Velocidad de reducción por fotograma
+
+    if (fondoScale > targetScale) {
+        fondoScale = max(fondoScale - shrinkRate, targetScale); // Reducir la escala gradualmente
     }
-    scale(zoomFactor); // Aplica el zoom
-    image(backgroundImg, 0, 0, width, height);
-    pop();
-  } else if (currentLevel === 3) {
-    // Zoom out más (nivel 3)
-    push();
-    translate(-width * 0.05, -height * 0.05); // Menos desplazamiento
-    zoomFactor += zoomSpeed * 0.5; // Menos incremento del zoom
-    if (zoomFactor > maxZoom) {
-      zoomFactor = maxZoom; // Limitar el zoom
-    }
-    scale(zoomFactor); // Aplica el zoom
-    image(backgroundImg, 0, 0, width, height);
-    pop();
+
+    const scaledWidth = fondoWidth * fondoScale;  // Calcula el ancho de la imagen escalada
+    const scaledHeight = fondoHeight * fondoScale; // Calcula el alto de la imagen escalada
+
+    image(fondo, 0, 0, scaledWidth, scaledHeight);
+    drawHUD();
+}
+ else if (currentLevel === 3) {
+  const targetScale = 1; // Escala objetivo para el nivel 2
+  const shrinkRate = 0.01; // Velocidad de reducción por fotograma
+
+  if (fondoScale > targetScale) {
+      fondoScale = max(fondoScale - shrinkRate, targetScale); // Reducir la escala gradualmente
   }
 
-  baseShapes.forEach(shape => shape.display());
+  const scaledWidth = fondoWidth * fondoScale;  // Calcula el ancho de la imagen escalada
+  const scaledHeight = fondoHeight * fondoScale; // Calcula el alto de la imagen escalada
+
+  image(fondo, 0, 0, scaledWidth, scaledHeight);
   drawHUD();
-  checkIfAllSnapped();
-}
-
-
-function checkIfAllSnapped() {
-  if (baseShapes.every(shape => shape.snapped)) {
-    currentLevel++;
-    transitionToNextLevel();
+  } else if (currentLevel === 4) {
+    const targetScale = 0.6; // Escala objetivo para que se vea toda la imagen
+    const shrinkRate = 0.01; // Velocidad de reducción
+    
+    // Calcular el factor de escala en función de las dimensiones del lienzo
+    const scaleX = width / fondoWidth;   // Escala en base al ancho del lienzo
+    const scaleY = height / fondoHeight; // Escala en base al alto del lienzo
+    
+    // El factor de escala final es el mínimo entre el ancho y el alto
+    const maxScale = Math.min(scaleX, scaleY);
+    
+    // Reducir la escala progresivamente hasta alcanzar el valor máximo de escala
+    if (fondoScale > maxScale) {
+      fondoScale -= shrinkRate;
+    } else {
+      fondoScale = maxScale; // Asegurarse de no pasar del objetivo
+    }
+    
+    // Calcular dimensiones escaladas
+    const scaledWidth = fondoWidth * fondoScale;
+    const scaledHeight = fondoHeight * fondoScale;
+  
+    // Dibujar la imagen desde (0, 0) con las nuevas dimensiones escaladas
+    image(fondo, 0, 0, scaledWidth, scaledHeight);
   }
-}
+}  
+  
+
+
+  function checkIfAllSnapped() {
+    if (baseShapes.every(shape => shape.snapped)) {
+      currentLevel++;
+      transitionToNextLevel(); 
+    }
+  }
+  
 
 function resetSnappedShapes() {
   hudShapes.forEach(shape => {
@@ -197,17 +231,26 @@ function resetSnappedShapes() {
   });
 }
 
- function transitionToNextLevel() {
-  hudShapes = hudShapes.filter(shape => !baseShapes.some(base => base.isSnapped(shape)));
-  baseShapes = [];
-   loadLevel(currentLevel);
+function transitionToNextLevel() {
+  if (currentLevel === 1) {
+    fondoScale = 1; // Reiniciamos la escala del fondo
   }
-  
 
+
+  // Filtrar las piezas del HUD que se han encastrado
+  hudShapes = hudShapes.filter(shape => !baseShapes.some(base => base.isSnapped(shape)));
+  
+  // Limpiar las piezas del nivel anterior y cargar las del siguiente nivel
+  baseShapes = [];
+  loadLevel(currentLevel);
+}
+
+
+  
 
 function mousePressed() {
   if (currentLevel === 0) {
-    currentLevel = 1; // Pasamos al nivel 1
+    currentLevel =1; 
     transitionToNextLevel();
   }
 
