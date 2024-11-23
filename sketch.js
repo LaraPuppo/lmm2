@@ -18,9 +18,9 @@ let img1Opacity = 255; // Opacidad inicial para Img1
 function preload() {
   // Fondo
   fondo = loadImage('assets/fondo.svg');
-  fondo1 = loadImage('assets/fondo1.jpg');
-  fondo2 = loadImage('assets/fondo2.jpg');
-  fondo3 = loadImage('assets/fondo3.jpg');
+  fondo1 = loadImage('assets/fondo1.svg');
+  fondo2 = loadImage('assets/fondo2.svg');
+  fondo3 = loadImage('assets/fondo3.svg');
 
   // Componentes
   Img1 = loadImage('assets/componentes/img1.png');
@@ -75,9 +75,9 @@ function draw() {
 function initHUD() {
   hudShapes = [
     new DraggableShape(120, 60, Img2, 180, 1.2, 1.2),
-    new DraggableShape(280, 60, Img13, 90),
+    new DraggableShape(280, 60, Img10, 180),
     new DraggableShape(400, 60, Img14, 135),
-    new DraggableShape(520, 60, Img10, 180),
+    new DraggableShape(520, 60, Img13, 90),
     new DraggableShape(650, 60, Img6, 225),
     new DraggableShape(110, 60, Img7, 315),
     new DraggableShape(240, 60, Img8, 90),
@@ -102,20 +102,20 @@ function loadLevel(level) {
     ];
   } else if (level === 2) {
     baseShapes = [
-      new FixedShape(350, height - 200, Img6, 0),
-      new FixedShape(800, height - 200, Img13, 0),
-      new FixedShape(800, height - 200, Img9, 0),
-      new FixedShape(500, height - 200, Img7, 0),
-      new FixedShape(650, height - 200, Img8, 0),
+      new FixedShape( 1049,102, Img6,0, 1.8,1.8),
+      new FixedShape(931, 451, Img7,0, 1.8,1.8),
+      new FixedShape(1159, 560, Img13,0, 1.8,1.8),
+      new FixedShape(525, 604, Img8,0, 1.8,1.8),
+      new FixedShape(63, 589, Img9,0, 1.8,1.8),
     ];
   } else if (level === 3) {
     baseShapes = [
-      new FixedShape(350, height - 400, Img10, 0),
-      new FixedShape(500, height - 400, Img11, 0),
-      new FixedShape(650, height - 200, Img12, 0),
-      new FixedShape(350, height - 200, Img14, 0),
-      new FixedShape(500, height - 200, Img15, 0),
-      new FixedShape(650, height - 400, Img16, 0),
+      new FixedShape(200, 640, Img10, 0,1,1),
+      new FixedShape(475, 545, Img11, 0,1,1),
+      new FixedShape(555, 640, Img12, 0,1,1),
+      new FixedShape(885, 195, Img14, 0,1,1),
+      new FixedShape(110, 30, Img15, 0,1,1),
+      new FixedShape(1177, 290, Img16, 0,1,1),
     ];
   }
 }
@@ -177,7 +177,7 @@ function drawLevels() {
     drawHUD();
   } else if (currentLevel === 2) {
     const targetScale = 1.5; // Escala objetivo para el nivel 2
-    const shrinkRate = 0.01; // Velocidad de reducción por fotograma
+    const shrinkRate = 0.1; // Velocidad de reducción por fotograma
 
     if (fondoScale > targetScale) {
         fondoScale = max(fondoScale - shrinkRate, targetScale); // Reducir la escala gradualmente
@@ -191,7 +191,7 @@ function drawLevels() {
 }
  else if (currentLevel === 3) {
   const targetScale = 1; // Escala objetivo para el nivel 2
-  const shrinkRate = 0.01; // Velocidad de reducción por fotograma
+  const shrinkRate = 0.1; // Velocidad de reducción por fotograma
 
   if (fondoScale > targetScale) {
       fondoScale = max(fondoScale - shrinkRate, targetScale); // Reducir la escala gradualmente
