@@ -12,6 +12,8 @@ let fondoScale = 1; // Escala en el Nivel 2
 let targetWidth = 5600; // Ancho objetivo en el Nivel 2
 let targetHeight = (targetWidth / 16) * 9; // Alto objetivo en el Nivel 2
 
+let img1Opacity = 255; // Opacidad inicial para Img1
+
 
 function preload() {
   // Fondo
@@ -46,9 +48,7 @@ function preload() {
 
 function setup() {
   let canvasWidth = 1300;
-  let canvasHeight = (canvasWidth / 16) * 9;;
-
-  
+  let canvasHeight = (canvasWidth / 16) * 9;
   createCanvas(canvasWidth, canvasHeight);
   initHUD();
   loadLevel(currentLevel);
@@ -57,6 +57,8 @@ function setup() {
 
 function draw() {
   console.log(currentLevel);
+
+
   if (currentLevel === 0) {
     drawLevels();
   } else if (currentLevel === 1) {
@@ -72,45 +74,45 @@ function draw() {
 
 function initHUD() {
   hudShapes = [
-    new DraggableShape(120, 60, Img2, 0, 1.2, 1.2),
-    new DraggableShape(250, 60, Img3, 0),
-    new DraggableShape(390, 60, Img4, 0),
-    new DraggableShape(550, 60, Img5, 0),
-    new DraggableShape(650, 60, Img6, 0),
-    new DraggableShape(120, 60, Img7, 0),
-    new DraggableShape(250, 60, Img8, 0),
-    new DraggableShape(390, 60, Img9, 0),
-    new DraggableShape(550, 60, Img10, 0),
-    new DraggableShape(650, 60, Img11, 0),
-    new DraggableShape(120, 60, Img12, 0),
-    new DraggableShape(250, 60, Img13, 0),
-    new DraggableShape(390, 60, Img14, 0),
-    new DraggableShape(550, 60, Img15, 0),
-    new DraggableShape(650, 60, Img16, 0),
+    new DraggableShape(120, 60, Img2, 180, 1.2, 1.2),
+    new DraggableShape(280, 60, Img13, 90),
+    new DraggableShape(400, 60, Img14, 135),
+    new DraggableShape(520, 60, Img10, 180),
+    new DraggableShape(650, 60, Img6, 225),
+    new DraggableShape(110, 60, Img7, 315),
+    new DraggableShape(240, 60, Img8, 90),
+    new DraggableShape(380, 60, Img9, 45),
+    new DraggableShape(510, 60, Img5, 270),
+    new DraggableShape(640, 60, Img11, 180),
+    new DraggableShape(120, 60, Img12, 180),
+    new DraggableShape(230, 60, Img3, 180),
+    new DraggableShape(390, 60, Img4, 180),
+    new DraggableShape(550, 60, Img15, 225),
+    new DraggableShape(650, 60, Img16, 135),
   ];
 }
 
 function loadLevel(level) {
   if (level === 1) {
     baseShapes = [
-      new FixedShape(330, 230, Img2, 0, 3.3, 3.1),
-      new FixedShape(450, height - 150, Img3, 0),
-      new FixedShape(600, height - 150, Img4, 0),
-      new FixedShape(750, height - 150, Img5, 0),
+      new FixedShape(313, 238, Img2, 0, 3.15, 3.15),
+      new FixedShape(945, 130, Img3, 0, 3.15,3.15),
+      new FixedShape(512, 554,Img4, 0, 3.15,3.15),
+      new FixedShape(1125, 444, Img5, 0, 3.15,3.15),
     ];
   } else if (level === 2) {
     baseShapes = [
       new FixedShape(350, height - 200, Img6, 0),
+      new FixedShape(800, height - 200, Img13, 0),
+      new FixedShape(800, height - 200, Img9, 0),
       new FixedShape(500, height - 200, Img7, 0),
       new FixedShape(650, height - 200, Img8, 0),
-      new FixedShape(800, height - 200, Img9, 0),
-      new FixedShape(350, height - 400, Img10, 0),
-      new FixedShape(500, height - 400, Img11, 0),
     ];
   } else if (level === 3) {
     baseShapes = [
+      new FixedShape(350, height - 400, Img10, 0),
+      new FixedShape(500, height - 400, Img11, 0),
       new FixedShape(650, height - 200, Img12, 0),
-      new FixedShape(800, height - 200, Img13, 0),
       new FixedShape(350, height - 200, Img14, 0),
       new FixedShape(500, height - 200, Img15, 0),
       new FixedShape(650, height - 400, Img16, 0),
@@ -119,11 +121,23 @@ function loadLevel(level) {
 }
 
 
+
+
 function drawHUD() {
+  
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   imageMode(CORNER);
-  image(Img1, 20, 20);
+
+  // Reducir la opacidad de Img1 en el nivel 4
+  if (currentLevel === 4) {
+    img1Opacity = lerp(img1Opacity, 0, 0.09); // Gradualmente hacia 0
+  }
+
+  tint(255, img1Opacity); // Aplicar opacidad a Img1
+  image(Img1, 20, 20); // Dibujar la imagen
+  tint(255, 255); // Resetear tint para no afectar otras imágenes
+
   hudShapes.slice(startIndex, endIndex).forEach((shape, index) => {
     if (shape.originalX == null || shape.originalY == null) {
       shape.originalX = shape.x;
@@ -131,15 +145,16 @@ function drawHUD() {
     }
     shape.update();
   });
+
   baseShapes.forEach(shape => shape.display());
   checkIfAllSnapped();
 }
 
 
 
+
 function drawLevels() {
   imageMode(CORNER);
-
   if (currentLevel === 0) {
     // Pantalla de inicio
     background(200);
@@ -149,7 +164,7 @@ function drawLevels() {
     text('Presiona el mouse para comenzar', width / 2, height / 2);
   } else if (currentLevel === 1) {
     const targetScale = 2.6; // Escala objetivo para el nivel 1
-    const growthRate = 0.01; // Velocidad de crecimiento por fotograma
+    const growthRate = 0.1; // Velocidad de crecimiento por fotograma
 
     if (fondoScale < targetScale) {
       fondoScale = min(fondoScale + growthRate, targetScale);
@@ -189,7 +204,7 @@ function drawLevels() {
   drawHUD();
   } else if (currentLevel === 4) {
     const targetScale = 0.6; // Escala objetivo para que se vea toda la imagen
-    const shrinkRate = 0.01; // Velocidad de reducción
+    const shrinkRate = 0.009; // Velocidad de reducción
     
     // Calcular el factor de escala en función de las dimensiones del lienzo
     const scaleX = width / fondoWidth;   // Escala en base al ancho del lienzo
@@ -211,17 +226,26 @@ function drawLevels() {
   
     // Dibujar la imagen desde (0, 0) con las nuevas dimensiones escaladas
     image(fondo, 0, 0, scaledWidth, scaledHeight);
+    drawHUD();
   }
+  fill(0); // Color del texto
+  textSize(16); // Tamaño del texto
+  noStroke(); // Sin borde
+  text(`x: ${mouseX} y: ${mouseY}`, mouseX + 10, mouseY - 10);
 }  
   
 
 
-  function checkIfAllSnapped() {
-    if (baseShapes.every(shape => shape.snapped)) {
-      currentLevel++;
-      transitionToNextLevel(); 
+function checkIfAllSnapped() {
+  if (baseShapes.every(shape => shape.snapped)) {
+    // Solo avanzar al siguiente nivel si Img1 ha desaparecido
+    if (currentLevel === 4 && img1Opacity > 0) {
+      return; // No avanzar mientras Img1 sigue visible
     }
+    currentLevel++;
+    transitionToNextLevel();
   }
+}
   
 
 function resetSnappedShapes() {
@@ -236,7 +260,6 @@ function transitionToNextLevel() {
     fondoScale = 1; // Reiniciamos la escala del fondo
   }
 
-
   // Filtrar las piezas del HUD que se han encastrado
   hudShapes = hudShapes.filter(shape => !baseShapes.some(base => base.isSnapped(shape)));
   
@@ -250,14 +273,14 @@ function transitionToNextLevel() {
 
 function mousePressed() {
   if (currentLevel === 0) {
-    currentLevel =1; 
+    currentLevel = 1; 
     transitionToNextLevel();
   }
 
   if (currentLevel === 1 || currentLevel === 2 || currentLevel === 3) {
     const startIndex = currentPage * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-
+  
     hudShapes.slice(startIndex, endIndex).forEach(shape => {
       if (shape.contains(mouseX, mouseY) && !shape.snapped) { // Solo seleccionar si no está encastrada
         selectedShape = shape;
@@ -266,48 +289,53 @@ function mousePressed() {
         shape.offsetY = shape.y - mouseY;
       }
     });
+  }  
 
     if (selectedShape && !selectedShape.snapped) {
       selectedShape.restoreOriginalPosition(); // Si no está encastrada, vuelve a la posición original
     }
   }
-}
 
-function mouseDragged() {
-  if (selectedShape && !selectedShape.snapped) {
-    selectedShape.x = mouseX;
-    selectedShape.y = mouseY;
+
+  function mouseDragged() {
+    if (selectedShape && !selectedShape.snapped) { // Solo permitir arrastrar si no está encastrada
+      selectedShape.x = mouseX + selectedShape.offsetX;
+      selectedShape.y = mouseY + selectedShape.offsetY;
+    }  
   }
-}
+  
 
 
-function mouseReleased() {
-  if (selectedShape) {
-    selectedShape.dragging = false;
-    let snapped = false;
-
-    // Verificar si encastra en alguna posición fija
-    baseShapes.forEach(baseShape => {
-      if (baseShape.isSnapped(selectedShape)) {
-        selectedShape.x = baseShape.x;
-        selectedShape.y = baseShape.y;
-        baseShape.snapped = true;  // Marcar la forma fija como encastrada
-        baseShape.opacity = 255;   // Asegurar opacidad total
-        snapSound.play();
-        snapped = true;
+  function mouseReleased() {
+    if (selectedShape) {
+      selectedShape.dragging = false;
+      let snapped = false;
+  
+      // Verificar si encastra en alguna posición fija
+      baseShapes.forEach(baseShape => {
+        if (baseShape.isSnapped(selectedShape)) {
+          selectedShape.x = baseShape.x;
+          selectedShape.y = baseShape.y;
+          baseShape.snapped = true;  // Marcar la forma fija como encastrada
+          baseShape.opacity = 255;   // Cambiar la opacidad a lo máximo
+          selectedShape.snapped = true; // Marcar también la pieza arrastrable
+          snapSound.play();
+          snapped = true;
+        }
+      });
+  
+      // Si no encastra, regresa a su posición original
+      if (!snapped) {
+        selectedShape.restoreOriginalPosition();
+       // errorSound.play();
       }
-    });
-
-    // Si no encastra, regresa a su posición original
-    if (!snapped) {
-      selectedShape.restoreOriginalPosition(); // Volver a la posición original
-      // errorSound.play(); 
+  
+      // Reiniciar selección
+      selectedShape = null;
     }
-
-    // Reiniciar selección
-    selectedShape = null;
   }
-}
+  
+  
 
 
 function keyPressed() {
@@ -355,13 +383,13 @@ class DraggableShape {
   }
 
   restoreOriginalPosition() {
-    // Solo restaurar si no está encastrada
-    if (!this.snapped) {
+    if (!this.snapped) { // No restaurar si está encastrada
       this.x = this.originalX;
       this.y = this.originalY;
       this.rotation = this.originalRotation; // Restaurar rotación inicial
     }
   }
+  
 
   update() {
     push();
