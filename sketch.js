@@ -87,7 +87,7 @@ function draw() {
     drawLevels();
    } else if (currentLevel === 5) {
     drawLevels();
-   }
+   } 
 }
 
 function initHUD() {
@@ -249,9 +249,44 @@ function drawLevels() {
     image(fondo, 0, 0, scaledWidth, scaledHeight);
     drawHUD();
   } else if (currentLevel === 5) {
-    drawLoopingSprites(endSprites); 
-  }
+    const targetScale = 12; // Escala objetivo para el zoom in
+    const growthRate = 0.10; // Velocidad de crecimiento por fotograma
+
+    if (fondoScale < targetScale) {
+        fondoScale = min(fondoScale + growthRate, targetScale);
+    }
+
+    const scaledWidth = fondoWidth * fondoScale;   // Ancho escalado
+    const scaledHeight = fondoHeight * fondoScale; // Alto escalado
+
+    // Calcular desplazamiento para centrar la imagen escalada
+    const offsetX = (width - scaledWidth) / 2;   // Centrar en X
+    const offsetY = (height - scaledHeight) / 2; // Centrar en Y
+
+    // Calcular el nivel de opacidad basado en la escala
+    const maxTint = 255; // Nivel máximo de oscurecimiento
+    const fadeProgress = map(fondoScale, 1, targetScale, 0, maxTint); // Progreso del tint
+
+    // Asegurarse de que el valor esté entre 0 y maxTint
+    const tintValue = constrain(fadeProgress, 0, maxTint);
+
+    // Aplicar tint con opacidad progresiva
+    tint(255 - tintValue); // Tinte hacia negro
+
+    // Dibujar la imagen escalada
+    image(fondo, offsetX, offsetY, scaledWidth, scaledHeight);
+
+    // Si llega al targetScale, pantalla completamente negra
+    if (fondoScale >= targetScale) {
+        noTint(); // Quitar tint
+        background(0); // Pantalla completamente negra
+
+        // Dibujar sprites de fin
+        drawLoopingSprites(endSprites);
+    }
 }
+}
+
 
 
 function checkIfAllSnapped() {
@@ -290,7 +325,7 @@ function transitionToNextLevel() {
 
 function mousePressed() {
   if (currentLevel === 0) {
-    currentLevel = 1; 
+    currentLevel = 4; 
     transitionToNextLevel();
   } else if (currentLevel === 4) {
     currentLevel = 5; 
@@ -318,11 +353,18 @@ function mousePressed() {
 
 
   function mouseDragged() {
-    if (selectedShape && !selectedShape.snapped) { // Solo permitir arrastrar si no está encastrada
+    if (selectedShape && !selectedShape.snapped) {
+      // Cambia el tamaño de la figura arrastrada al tamaño de las figuras fijas
+      const fixedShape = baseShapes[0]; // Tomar cualquier figura fija como referencia
+      if (fixedShape) {
+        selectedShape.scaleX = fixedShape.scaleX;
+        selectedShape.scaleY = fixedShape.scaleY;
+      }
       selectedShape.x = mouseX + selectedShape.offsetX;
       selectedShape.y = mouseY + selectedShape.offsetY;
-    }  
+    }
   }
+  
   
 
   function mouseReleased() {
@@ -335,17 +377,19 @@ function mousePressed() {
         if (baseShape.isSnapped(selectedShape)) {
           selectedShape.x = baseShape.x;
           selectedShape.y = baseShape.y;
-          baseShape.snapped = true;  // Marcar la forma fija como encastrada
-          baseShape.opacity = 255;   // Cambiar la opacidad a lo máximo
-          selectedShape.snapped = true; // Marcar también la pieza arrastrable
+          baseShape.snapped = true;  // Marcar la figura fija como encastrada
+          baseShape.opacity = 255;   // Opacidad máxima
+          selectedShape.snapped = true; // Marcar también la figura arrastrable
           snapSound.play();
           snapped = true;
         }
       });
   
-      // Si no encastra, regresa a su posición original
+      // Si no encastra, regresa al tamaño y posición originales
       if (!snapped) {
         selectedShape.restoreOriginalPosition();
+        selectedShape.scaleX = 1.2; // Escala original del HUD
+        selectedShape.scaleY = 1.2; // Escala original del HUD
        // errorSound.play();
       }
   
@@ -353,6 +397,7 @@ function mousePressed() {
       selectedShape = null;
     }
   }
+  
   
   
 function keyPressed() {
@@ -402,10 +447,13 @@ class DraggableShape {
   restoreOriginalPosition() {
     if (!this.snapped) { // No restaurar si está encastrada
       this.x = this.originalX;
-      this.y = this.originalY;; // drawLoopingSprites(endSprites)
-      this.rotation = this.originalRotation; // Restaurar rotación inicial
+      this.y = this.originalY;
+      this.rotation = this.originalRotation;
+      this.scaleX = 1.2; // Escala original del HUD
+      this.scaleY = 1.2; // Escala original del HUD
     }
   }
+  
   
 
   update() {
