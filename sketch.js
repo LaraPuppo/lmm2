@@ -14,6 +14,11 @@ let targetHeight = (targetWidth / 16) * 9; // Alto objetivo en el Nivel 2
 
 let img1Opacity = 255; // Opacidad inicial para Img1
 
+let startSprites = []; // Imágenes de inicio
+let endSprites = [];   // Imágenes de final
+let spriteIndex = 0;   // Índice actual del sprite
+let spriteDirection = 1; // Dirección del loop: 1 adelante, -1 atrás
+let spriteSpeed = 10;  // Velocidad en frames por cambio de sprite
 
 function preload() {
   // Fondo
@@ -44,7 +49,18 @@ function preload() {
   rotateSound = loadSound('assets/sonidos/girar elementos.mp3');
   snapSound = loadSound('assets/sonidos/conexion correcta 1.mp3');
   errorSound = loadSound('assets/sonidos/cortocircuitofuerte.mp3');
+
+  // Sprites de inicio
+   for (let i = 1; i <= 16; i++) {
+     startSprites.push(loadImage(`assets/inicio/inicio${i}.jpg`));
+   }
+
+  // Sprites de final
+  for (let i = 1; i <= 16; i++) {
+    endSprites.push(loadImage(`assets/final/final${i}.jpg`));
+  }
 }
+
 
 function setup() {
   let canvasWidth = 1300;
@@ -68,6 +84,8 @@ function draw() {
   }else if (currentLevel === 3) {
     drawLevels();
   } else if (currentLevel === 4) {
+    drawLevels();
+   } else if (currentLevel === 5) {
     drawLevels();
    }
 }
@@ -105,26 +123,37 @@ function loadLevel(level) {
       new FixedShape( 1049,102, Img6,0, 1.8,1.8),
       new FixedShape(931, 451, Img7,0, 1.8,1.8),
       new FixedShape(1159, 560, Img13,0, 1.8,1.8),
-      new FixedShape(525, 604, Img8,0, 1.8,1.8),
-      new FixedShape(63, 589, Img9,0, 1.8,1.8),
+      new FixedShape(524, 604, Img8,0, 1.8,1.8),
+      new FixedShape(63, 590, Img9,0, 1.8,1.8),
     ];
   } else if (level === 3) {
     baseShapes = [
-      new FixedShape(200, 640, Img10, 0,1,1),
-      new FixedShape(475, 545, Img11, 0,1,1),
-      new FixedShape(555, 640, Img12, 0,1,1),
-      new FixedShape(885, 195, Img14, 0,1,1),
-      new FixedShape(110, 30, Img15, 0,1,1),
-      new FixedShape(1177, 290, Img16, 0,1,1),
+      new FixedShape(199, 643, Img10, 0,1.2,1.2),
+      new FixedShape(479, 544, Img11, 0,1.2,1.2),
+      new FixedShape(554, 641, Img12, 0,1.2,1.2),
+      new FixedShape(882, 197, Img14, 0,1.2,1.2),
+      new FixedShape(1109, 37, Img15, 0,1.2,1.2),
+      new FixedShape(1177, 290, Img16, 0,1.2,1.2),
     ];
   }
 }
 
+function drawLoopingSprites(spriteArray) {
+  // Dibuja el sprite actual
+  image(spriteArray[spriteIndex], 0, 0, width, height);
+  
+  // Control del índice para el loop
+  if (frameCount % spriteSpeed === 0) {
+    spriteIndex++;
 
-
+    // Reiniciar el índice si se alcanza el final
+    if (spriteIndex >= spriteArray.length) {
+      spriteIndex = 0; // Reinicia para loop infinito
+    }
+  }
+}
 
 function drawHUD() {
-  
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   imageMode(CORNER);
@@ -151,20 +180,13 @@ function drawHUD() {
 }
 
 
-
-
 function drawLevels() {
   imageMode(CORNER);
   if (currentLevel === 0) {
-    // Pantalla de inicio
-    background(200);
-    textAlign(CENTER, CENTER);
-    textSize(32);
-    fill(50);
-    text('Presiona el mouse para comenzar', width / 2, height / 2);
+    drawLoopingSprites(startSprites);
   } else if (currentLevel === 1) {
     const targetScale = 2.6; // Escala objetivo para el nivel 1
-    const growthRate = 0.1; // Velocidad de crecimiento por fotograma
+    const growthRate = 0.05; // Velocidad de crecimiento por fotograma
 
     if (fondoScale < targetScale) {
       fondoScale = min(fondoScale + growthRate, targetScale);
@@ -177,7 +199,7 @@ function drawLevels() {
     drawHUD();
   } else if (currentLevel === 2) {
     const targetScale = 1.5; // Escala objetivo para el nivel 2
-    const shrinkRate = 0.1; // Velocidad de reducción por fotograma
+    const shrinkRate = 0.05; // Velocidad de reducción por fotograma
 
     if (fondoScale > targetScale) {
         fondoScale = max(fondoScale - shrinkRate, targetScale); // Reducir la escala gradualmente
@@ -188,10 +210,9 @@ function drawLevels() {
 
     image(fondo, 0, 0, scaledWidth, scaledHeight);
     drawHUD();
-}
- else if (currentLevel === 3) {
+  } else if (currentLevel === 3) {
   const targetScale = 1; // Escala objetivo para el nivel 2
-  const shrinkRate = 0.1; // Velocidad de reducción por fotograma
+  const shrinkRate = 0.05; // Velocidad de reducción por fotograma
 
   if (fondoScale > targetScale) {
       fondoScale = max(fondoScale - shrinkRate, targetScale); // Reducir la escala gradualmente
@@ -227,13 +248,10 @@ function drawLevels() {
     // Dibujar la imagen desde (0, 0) con las nuevas dimensiones escaladas
     image(fondo, 0, 0, scaledWidth, scaledHeight);
     drawHUD();
+  } else if (currentLevel === 5) {
+    drawLoopingSprites(endSprites); 
   }
-  fill(0); // Color del texto
-  textSize(16); // Tamaño del texto
-  noStroke(); // Sin borde
-  text(`x: ${mouseX} y: ${mouseY}`, mouseX + 10, mouseY - 10);
-}  
-  
+}
 
 
 function checkIfAllSnapped() {
@@ -256,24 +274,26 @@ function resetSnappedShapes() {
 }
 
 function transitionToNextLevel() {
+  console.log(`Transición al nivel: ${currentLevel}`);
+  spriteIndex = 0;  // Reinicia el índice de los sprites
+  spriteDirection = 1;  // Asegúrate de que la dirección sea positiva
+
   if (currentLevel === 1) {
-    fondoScale = 1; // Reiniciamos la escala del fondo
+    fondoScale = 1; // Reinicia la escala del fondo
   }
 
-  // Filtrar las piezas del HUD que se han encastrado
   hudShapes = hudShapes.filter(shape => !baseShapes.some(base => base.isSnapped(shape)));
-  
-  // Limpiar las piezas del nivel anterior y cargar las del siguiente nivel
   baseShapes = [];
-  loadLevel(currentLevel);
+  loadLevel(currentLevel); // Carga el nuevo nivel
 }
 
-
-  
 
 function mousePressed() {
   if (currentLevel === 0) {
     currentLevel = 1; 
+    transitionToNextLevel();
+  } else if (currentLevel === 4) {
+    currentLevel = 5; 
     transitionToNextLevel();
   }
 
@@ -305,7 +325,6 @@ function mousePressed() {
   }
   
 
-
   function mouseReleased() {
     if (selectedShape) {
       selectedShape.dragging = false;
@@ -336,8 +355,6 @@ function mousePressed() {
   }
   
   
-
-
 function keyPressed() {
   if (selectedShape) {
     // Si hay una forma seleccionada, rotarla
@@ -385,7 +402,7 @@ class DraggableShape {
   restoreOriginalPosition() {
     if (!this.snapped) { // No restaurar si está encastrada
       this.x = this.originalX;
-      this.y = this.originalY;
+      this.y = this.originalY;; // drawLoopingSprites(endSprites)
       this.rotation = this.originalRotation; // Restaurar rotación inicial
     }
   }
@@ -415,15 +432,13 @@ class DraggableShape {
 }
 
 
-
-
 class FixedShape {
   constructor(x, y, img, rotation, scaleX = 1, scaleY = 1) {
     this.x = x;
     this.y = y;
     this.img = img;
     this.rotation = rotation;
-    this.opacity = 100;
+    this.opacity = 0;
     this.snapped = false;
     this.scaleX = scaleX;
     this.scaleY = scaleY;
