@@ -325,7 +325,7 @@ function transitionToNextLevel() {
 
 function mousePressed() {
   if (currentLevel === 0) {
-    currentLevel = 4; 
+    currentLevel = 1; 
     transitionToNextLevel();
   } else if (currentLevel === 4) {
     currentLevel = 5; 
