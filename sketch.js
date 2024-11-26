@@ -5,7 +5,7 @@ let currentLevel = 0;
 let currentPage = 0; 
 const itemsPerPage = 5;
 let rotateSound, snapSound, errorSound;
-
+let hudImages = [];
 let fondoWidth = 2300;  // Tamaño original
 let fondoHeight = (fondoWidth / 16) * 9; // Calcula el alto respetando la relación 16:9
 let fondoScale = 1; // Escala en el Nivel 2
@@ -18,17 +18,16 @@ let startSprites = []; // Imágenes de inicio
 let endSprites = [];   // Imágenes de final
 let spriteIndex = 0;   // Índice actual del sprite
 let spriteDirection = 1; // Dirección del loop: 1 adelante, -1 atrás
-let spriteSpeed = 10;  // Velocidad en frames por cambio de sprite
+let spriteSpeed = 9;  // Velocidad en frames por cambio de sprite
 
 function preload() {
   // Fondo
-  fondo = loadImage('assets/fondo.svg');
-  fondo1 = loadImage('assets/fondo1.svg');
-  fondo2 = loadImage('assets/fondo2.svg');
-  fondo3 = loadImage('assets/fondo3.svg');
+  fondo = loadImage('assets/fondos/fondo.svg');
+  fondo1 = loadImage('assets/fondos/fondo1.svg');
+  fondo2 = loadImage('assets/fondos/fondo2.svg');
+  fondo3 = loadImage('assets/fondos/fondo3.svg');
 
   // Componentes
-  Img1 = loadImage('assets/componentes/img1.png');
   Img2 = loadImage('assets/componentes/img2.png');
   Img3 = loadImage('assets/componentes/img3.png');
   Img4 = loadImage('assets/componentes/img4.png');
@@ -45,10 +44,21 @@ function preload() {
   Img15 = loadImage('assets/componentes/img15.png');
   Img16 = loadImage('assets/componentes/img16.png');
 
+  hudImages = [
+    loadImage('assets/hud/hud1.png'), // Imagen para página 0
+    loadImage('assets/hud/hud2.png'), // Imagen para página 1
+    loadImage('assets/hud/hud3.png'), // Imagen para página 2
+  ];
+
   // Sonidos
   rotateSound = loadSound('assets/sonidos/girar elementos.mp3');
   snapSound = loadSound('assets/sonidos/conexion correcta 1.mp3');
   errorSound = loadSound('assets/sonidos/cortocircuitofuerte.mp3');
+  fondoSound = loadSound('assets/sonidos/fondo.mp3');
+
+  // Video
+  video = createVideo(['assets/video.mp4']);
+  video.hide(); 
 
   // Sprites de inicio
    for (let i = 1; i <= 16; i++) {
@@ -66,6 +76,7 @@ function setup() {
   let canvasWidth = 1300;
   let canvasHeight = (canvasWidth / 16) * 9;
   createCanvas(canvasWidth, canvasHeight);
+  fondoSound.loop(); 
   initHUD();
   loadLevel(currentLevel);
 }
@@ -73,8 +84,6 @@ function setup() {
 
 function draw() {
   console.log(currentLevel);
-
-
   if (currentLevel === 0) {
     drawLevels();
   } else if (currentLevel === 1) {
@@ -87,26 +96,30 @@ function draw() {
     drawLevels();
    } else if (currentLevel === 5) {
     drawLevels();
-   } 
+   } else if (currentLevel === 6){
+    drawLevels();
+   }
+   text(`X: ${mouseX} Y: ${mouseY}`, mouseX, mouseY);
+
 }
 
 function initHUD() {
   hudShapes = [
-    new DraggableShape(120, 60, Img2, 180, 1.2, 1.2),
-    new DraggableShape(280, 60, Img10, 180),
-    new DraggableShape(400, 60, Img14, 135),
-    new DraggableShape(520, 60, Img13, 90),
-    new DraggableShape(650, 60, Img6, 225),
-    new DraggableShape(110, 60, Img7, 315),
-    new DraggableShape(240, 60, Img8, 90),
-    new DraggableShape(380, 60, Img9, 45),
-    new DraggableShape(510, 60, Img5, 270),
-    new DraggableShape(640, 60, Img11, 180),
-    new DraggableShape(120, 60, Img12, 180),
-    new DraggableShape(230, 60, Img3, 180),
-    new DraggableShape(390, 60, Img4, 180),
-    new DraggableShape(550, 60, Img15, 225),
-    new DraggableShape(650, 60, Img16, 135),
+    new DraggableShape(153, 65, Img2, 180, 1.2, 1.2),
+    new DraggableShape(300, 65, Img10, 180),
+    new DraggableShape(420, 65, Img14, 135),
+    new DraggableShape(570, 65, Img13, 90),
+    new DraggableShape(700, 65, Img6, 225),
+    new DraggableShape(153, 65, Img7, 315),
+    new DraggableShape(290, 65, Img8, 90),
+    new DraggableShape(420, 65, Img9, 45),
+    new DraggableShape(520, 65, Img5, 270),
+    new DraggableShape(670, 65, Img11, 180),
+    new DraggableShape(153, 65, Img12, 180),
+    new DraggableShape(260, 65, Img3, 180),
+    new DraggableShape(420, 65, Img4, 180),
+    new DraggableShape(575, 65, Img15, 225),
+    new DraggableShape(700, 65, Img16, 135),
   ];
 }
 
@@ -141,30 +154,39 @@ function loadLevel(level) {
 function drawLoopingSprites(spriteArray) {
   // Dibuja el sprite actual
   image(spriteArray[spriteIndex], 0, 0, width, height);
-  
-  // Control del índice para el loop
-  if (frameCount % spriteSpeed === 0) {
-    spriteIndex++;
 
-    // Reiniciar el índice si se alcanza el final
-    if (spriteIndex >= spriteArray.length) {
-      spriteIndex = 0; // Reinicia para loop infinito
-    }
+  // Cambiar el índice basado en la dirección
+  if (frameCount % spriteSpeed === 0) {
+      spriteIndex += spriteDirection; // Incrementar o decrementar según la dirección
+
+      // Cambiar la dirección si llegamos al inicio o al final
+      if (spriteIndex >= spriteArray.length - 1) {
+          spriteDirection = -1; // Cambia dirección a atrás
+      } else if (spriteIndex <= 0) {
+          spriteDirection = 1; // Cambia dirección a adelante
+      }
   }
 }
+
 
 function drawHUD() {
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   imageMode(CORNER);
 
+  // Dibujar la imagen del HUD correspondiente a la página actual
+  if (currentPage >= 0 && currentPage < hudImages.length) {
+   // image(hudImages[currentPage], 0, 0, 80, 80); // Ajusta el tamaño si es necesario
+  }
+
+  
   // Reducir la opacidad de Img1 en el nivel 4
   if (currentLevel === 4) {
     img1Opacity = lerp(img1Opacity, 0, 0.09); // Gradualmente hacia 0
   }
 
   tint(255, img1Opacity); // Aplicar opacidad a Img1
-  image(Img1, 20, 20); // Dibujar la imagen
+  image(hudImages[currentPage], 20, 20,800,100); // Dibujar Img1
   tint(255, 255); // Resetear tint para no afectar otras imágenes
 
   hudShapes.slice(startIndex, endIndex).forEach((shape, index) => {
@@ -208,7 +230,7 @@ function drawLevels() {
     const scaledWidth = fondoWidth * fondoScale;  // Calcula el ancho de la imagen escalada
     const scaledHeight = fondoHeight * fondoScale; // Calcula el alto de la imagen escalada
 
-    image(fondo, 0, 0, scaledWidth, scaledHeight);
+    image(fondo1, 0, 0, scaledWidth, scaledHeight);
     drawHUD();
   } else if (currentLevel === 3) {
   const targetScale = 1; // Escala objetivo para el nivel 2
@@ -221,7 +243,7 @@ function drawLevels() {
   const scaledWidth = fondoWidth * fondoScale;  // Calcula el ancho de la imagen escalada
   const scaledHeight = fondoHeight * fondoScale; // Calcula el alto de la imagen escalada
 
-  image(fondo, 0, 0, scaledWidth, scaledHeight);
+  image(fondo2, 0, 0, scaledWidth, scaledHeight);
   drawHUD();
   } else if (currentLevel === 4) {
     const targetScale = 0.6; // Escala objetivo para que se vea toda la imagen
@@ -246,10 +268,22 @@ function drawLevels() {
     const scaledHeight = fondoHeight * fondoScale;
   
     // Dibujar la imagen desde (0, 0) con las nuevas dimensiones escaladas
-    image(fondo, 0, 0, scaledWidth, scaledHeight);
+    image(fondo3, 0, 0, scaledWidth, scaledHeight);
     drawHUD();
-  } else if (currentLevel === 5) {
-    const targetScale = 12; // Escala objetivo para el zoom in
+  
+    // Verificar si se alcanzó el nivel de zoom final y hacer la transición al nivel 5
+    if (fondoScale <= maxScale) {
+        currentLevel = 5; // Cambiar al siguiente nivel
+        transitionToNextLevel(); // Llamar a la función para cambiar de nivel
+    }
+}
+ else if (currentLevel === 5) {
+    video.play();  // Reproduce el video en loop
+    video.speed(1); // Ajusta la velocidad si lo deseas (1 es la velocidad normal)
+    // Dibuja el video en el canvas
+    image(video, 0, 0, width, height);
+} else if (currentLevel === 6){
+  const targetScale = 12; // Escala objetivo para el zoom in
     const growthRate = 0.10; // Velocidad de crecimiento por fotograma
 
     if (fondoScale < targetScale) {
@@ -274,7 +308,7 @@ function drawLevels() {
     tint(255 - tintValue); // Tinte hacia negro
 
     // Dibujar la imagen escalada
-    image(fondo, offsetX, offsetY, scaledWidth, scaledHeight);
+    image(fondo3, offsetX, offsetY, scaledWidth, scaledHeight);
 
     // Si llega al targetScale, pantalla completamente negra
     if (fondoScale >= targetScale) {
@@ -325,12 +359,12 @@ function transitionToNextLevel() {
 
 function mousePressed() {
   if (currentLevel === 0) {
-    currentLevel = 1; 
+    currentLevel = 4; 
     transitionToNextLevel();
-  } else if (currentLevel === 4) {
-    currentLevel = 5; 
+  } else if (currentLevel === 5) {
+    currentLevel = 6; 
     transitionToNextLevel();
-  }
+  } 
 
   if (currentLevel === 1 || currentLevel === 2 || currentLevel === 3) {
     const startIndex = currentPage * itemsPerPage;
