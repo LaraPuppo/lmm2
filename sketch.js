@@ -84,6 +84,7 @@ function setup() {
 
 function draw() {
   console.log(currentLevel);
+  // fondoSound.loop(); 
   if (currentLevel === 0) {
     drawLevels();
   } else if (currentLevel === 1) {
@@ -136,8 +137,8 @@ function loadLevel(level) {
       new FixedShape( 1049,102, Img6,0, 1.8,1.8),
       new FixedShape(931, 451, Img7,0, 1.8,1.8),
       new FixedShape(1159, 560, Img13,0, 1.8,1.8),
-      new FixedShape(524, 604, Img8,0, 1.8,1.8),
-      new FixedShape(63, 590, Img9,0, 1.8,1.8),
+      new FixedShape(524, 614, Img8,0, 1.8,1.8),
+      new FixedShape(65, 598, Img9,0, 1.8,1.8),
     ];
   } else if (level === 3) {
     baseShapes = [
@@ -145,7 +146,7 @@ function loadLevel(level) {
       new FixedShape(479, 544, Img11, 0,1.2,1.2),
       new FixedShape(554, 641, Img12, 0,1.2,1.2),
       new FixedShape(882, 197, Img14, 0,1.2,1.2),
-      new FixedShape(1109, 37, Img15, 0,1.2,1.2),
+      new FixedShape(1111, 37, Img15, 0,1.2,1.2),
       new FixedShape(1177, 290, Img16, 0,1.2,1.2),
     ];
   }
@@ -359,7 +360,7 @@ function transitionToNextLevel() {
 
 function mousePressed() {
   if (currentLevel === 0) {
-    currentLevel = 4; 
+    currentLevel = 1; 
     transitionToNextLevel();
   } else if (currentLevel === 5) {
     currentLevel = 6; 
