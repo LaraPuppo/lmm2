@@ -1,3 +1,5 @@
+const canvasWidth = 1300;
+const canvasHeight = (canvasWidth / 16) * 9; // Relación 16:9
 let hudShapes = [];
 let baseShapes = [];
 let selectedShape = null;
@@ -11,14 +13,8 @@ let fondoHeight = (fondoWidth / 16) * 9; // Calcula el alto respetando la relaci
 let fondoScale = 1; // Escala en el Nivel 2
 let targetWidth = 5600; // Ancho objetivo en el Nivel 2
 let targetHeight = (targetWidth / 16) * 9; // Alto objetivo en el Nivel 2
-
 let img1Opacity = 255; // Opacidad inicial para Img1
 
-let startSprites = []; // Imágenes de inicio
-let endSprites = [];   // Imágenes de final
-let spriteIndex = 0;   // Índice actual del sprite
-let spriteDirection = 1; // Dirección del loop: 1 adelante, -1 atrás
-let spriteSpeed = 9;  // Velocidad en frames por cambio de sprite
 
 function preload() {
   // Fondo
@@ -56,52 +52,38 @@ function preload() {
   errorSound = loadSound('assets/sonidos/cortocircuitofuerte.mp3');
   fondoSound = loadSound('assets/sonidos/fondo.mp3');
 
-  // Video
-  video = createVideo(['assets/video.mp4']);
+  // Videos
+  inicio = createVideo(['assets/videos/inicio.mp4']);
+  final = createVideo(['assets/videos/final.mp4']);
+  video = createVideo(['assets/videos/video.mp4']);
+  inicio.hide(); 
+  final.hide();
   video.hide(); 
-
-  // Sprites de inicio
-   for (let i = 1; i <= 16; i++) {
-     startSprites.push(loadImage(`assets/inicio/inicio${i}.jpg`));
-   }
-
-  // Sprites de final
-  for (let i = 1; i <= 16; i++) {
-    endSprites.push(loadImage(`assets/final/final${i}.jpg`));
-  }
 }
-
 
 function setup() {
-  let canvasWidth = 1300;
-  let canvasHeight = (canvasWidth / 16) * 9;
   createCanvas(canvasWidth, canvasHeight);
-  fondoSound.loop(); 
   initHUD();
   loadLevel(currentLevel);
+  fondoSound.loop();
 }
 
-
 function draw() {
-  console.log(currentLevel);
-  // fondoSound.loop(); 
-  if (currentLevel === 0) {
-    drawLevels();
-  } else if (currentLevel === 1) {
-    drawLevels();
-  }  else if (currentLevel === 2) {
-    drawLevels();
-  }else if (currentLevel === 3) {
-    drawLevels();
-  } else if (currentLevel === 4) {
-    drawLevels();
-   } else if (currentLevel === 5) {
-    drawLevels();
-   } else if (currentLevel === 6){
-    drawLevels();
-   }
-   text(`X: ${mouseX} Y: ${mouseY}`, mouseX, mouseY);
-
+ if (currentLevel === 0) {
+   drawLevels();
+ } else if (currentLevel === 1) {
+   drawLevels();
+ }  else if (currentLevel === 2) {
+   drawLevels();
+ }else if (currentLevel === 3) {
+   drawLevels();
+ } else if (currentLevel === 4) {
+   drawLevels();
+  } else if (currentLevel === 5) {
+   drawLevels();
+  } else if (currentLevel === 6){
+   drawLevels();
+  }
 }
 
 function initHUD() {
@@ -137,50 +119,29 @@ function loadLevel(level) {
       new FixedShape( 1049,102, Img6,0, 1.8,1.8),
       new FixedShape(931, 451, Img7,0, 1.8,1.8),
       new FixedShape(1159, 560, Img13,0, 1.8,1.8),
-      new FixedShape(524, 614, Img8,0, 1.8,1.8),
-      new FixedShape(65, 598, Img9,0, 1.8,1.8),
+      new FixedShape(523, 612, Img8,0, 1.8,1.8),
+      new FixedShape(67, 598, Img9,0, 1.8,1.8),
     ];
   } else if (level === 3) {
     baseShapes = [
       new FixedShape(199, 643, Img10, 0,1.2,1.2),
       new FixedShape(479, 544, Img11, 0,1.2,1.2),
       new FixedShape(554, 641, Img12, 0,1.2,1.2),
-      new FixedShape(882, 197, Img14, 0,1.2,1.2),
-      new FixedShape(1111, 37, Img15, 0,1.2,1.2),
-      new FixedShape(1177, 290, Img16, 0,1.2,1.2),
+      new FixedShape(881, 197, Img14, 0,1.2,1.2),
+      new FixedShape(1114, 37, Img15, 0,1.2,1.2),
+      new FixedShape(1178, 292, Img16, 0,1.2,1.2),
     ];
   }
 }
-
-function drawLoopingSprites(spriteArray) {
-  // Dibuja el sprite actual
-  image(spriteArray[spriteIndex], 0, 0, width, height);
-
-  // Cambiar el índice basado en la dirección
-  if (frameCount % spriteSpeed === 0) {
-      spriteIndex += spriteDirection; // Incrementar o decrementar según la dirección
-
-      // Cambiar la dirección si llegamos al inicio o al final
-      if (spriteIndex >= spriteArray.length - 1) {
-          spriteDirection = -1; // Cambia dirección a atrás
-      } else if (spriteIndex <= 0) {
-          spriteDirection = 1; // Cambia dirección a adelante
-      }
-  }
-}
-
 
 function drawHUD() {
   const startIndex = currentPage * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   imageMode(CORNER);
-
   // Dibujar la imagen del HUD correspondiente a la página actual
   if (currentPage >= 0 && currentPage < hudImages.length) {
    // image(hudImages[currentPage], 0, 0, 80, 80); // Ajusta el tamaño si es necesario
   }
-
-  
   // Reducir la opacidad de Img1 en el nivel 4
   if (currentLevel === 4) {
     img1Opacity = lerp(img1Opacity, 0, 0.09); // Gradualmente hacia 0
@@ -206,8 +167,12 @@ function drawHUD() {
 function drawLevels() {
   imageMode(CORNER);
   if (currentLevel === 0) {
-    drawLoopingSprites(startSprites);
+    inicio.play();  // Reproduce el video en loop
+    inicio.speed(1); // Ajusta la velocidad si lo deseas (1 es la velocidad normal)
+    // Dibuja el video en el canvas
+    image(inicio, 0, 0, canvasWidth, canvasHeight);
   } else if (currentLevel === 1) {
+    final.stop();
     const targetScale = 2.6; // Escala objetivo para el nivel 1
     const growthRate = 0.05; // Velocidad de crecimiento por fotograma
 
@@ -282,7 +247,7 @@ function drawLevels() {
     video.play();  // Reproduce el video en loop
     video.speed(1); // Ajusta la velocidad si lo deseas (1 es la velocidad normal)
     // Dibuja el video en el canvas
-    image(video, 0, 0, width, height);
+    image(video, 0, 0, canvasWidth, canvasHeight);
 } else if (currentLevel === 6){
   const targetScale = 12; // Escala objetivo para el zoom in
     const growthRate = 0.10; // Velocidad de crecimiento por fotograma
@@ -316,12 +281,13 @@ function drawLevels() {
         noTint(); // Quitar tint
         background(0); // Pantalla completamente negra
 
-        // Dibujar sprites de fin
-        drawLoopingSprites(endSprites);
+        final.play();  // Reproduce el video en loop
+        final.speed(1); // Ajusta la velocidad si lo deseas (1 es la velocidad normal)
+        // Dibuja el video en el canvas
+        image(final, 0, 0, canvasWidth, canvasHeight);
     }
 }
 }
-
 
 
 function checkIfAllSnapped() {
